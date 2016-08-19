@@ -23,6 +23,12 @@ pub enum NetworkMessage {
 	//LoginResponse(Option<User>),
 }
 
+#[cfg(windows)]
+fn no_content_code() -> u32 { 10035 }
+
+#[cfg(any(unix))]
+fn no_content_code() -> u32 { 35 }
+
 #[derive(RustcEncodable, RustcDecodable, PartialEq, Debug)]
 pub struct User {
 	pub id: u32,
@@ -111,7 +117,7 @@ impl ClientSocket {
 			},
 			Err(e) => {
 				if let Some(os_error) = e.raw_os_error() {
-					if os_error == 10035 || os_error == 35 {
+					if os_error == no_content_code() {
 						return Ok(None);
 					}
 				}
@@ -176,7 +182,7 @@ impl ServerSocket {
 			Err(e) => {
 				let mut no_clients_error = false;
 				if let Some(os_error) = e.raw_os_error() {
-					if os_error == 10035 || os_error == 35 {
+					if os_error == no_content_code() {
 						no_clients_error = true;
 					}
 				}
