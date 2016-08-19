@@ -13,15 +13,18 @@ use render::*;
 use model::*;
 use glium::Surface;
 use glium::glutin::VirtualKeyCode;
+use shared::*;
 
 fn main() {
     let mut display_data = DisplayData::new();
 	let mut game_state = GameState::new();
-    let model = Model::new(&display_data);
-	let mut network = shared::ClientSocket::create("localhost", 8080);
+    let mut model = Model::new_cube(&display_data);
+	let mut cubes: Vec<Model> = Vec::new();
+	let mut network = ClientSocket::create("localhost", 8080);
 
 	let mut last_time = time::precise_time_ns();
 	let mut last_connect_time = None;
+	let mut position_interval = 0;
     loop {
 		if !network.is_connected() {
 			let should_connect = match last_connect_time {
@@ -39,13 +42,39 @@ fn main() {
 			loop {
 				match network.get_message() {
 					Ok(Some(message)) => {
-						println!("message: {:?}", message);
-						if message == shared::NetworkMessage::Ping {
-							if let Err(e) = network.send(shared::NetworkMessage::Ping) {
+						if message == NetworkMessage::Ping {
+							if let Err(e) = network.send(NetworkMessage::Ping) {
 								println!("Socket error: {:?}", e);
 								network.disconnect();
 								last_connect_time = Some(time::precise_time_s());
 								break;
+							}
+						}
+						if let NetworkMessage::Identify(uid) = message {
+							model.id = uid;
+						}
+						if let NetworkMessage::RemoveEntity { uid } = message{
+							if let Some(index) = cubes.iter().position(|x| x.id == uid) {
+								cubes.remove(index);
+							}
+						}
+						if let NetworkMessage::SetPosition { uid, position, rotation: _ } = message {
+							if uid != model.id {
+								let mut found = false;
+								{
+									let item = cubes.iter_mut().find(|c| c.id == uid);
+									if let Some(c) = item {
+										c.position = position;
+										found = true;
+									}
+								}
+								if !found {
+									let mut c = Model::new_cube(&display_data);
+									c.id = uid;
+									c.position = position;
+									c.scale = [0.1, 0.1, 0.1];
+									cubes.push(c);
+								}
 							}
 						}
 					},
@@ -69,9 +98,26 @@ fn main() {
         let mut target = display_data.display.draw();
         target.clear_color_and_depth((0.0, 0.0, 1.0, 1.0), 1.0);
         model.render(&display_data, &mut target);
+		for cube in &cubes{
+			cube.render(&display_data, &mut target);
+		}
         target.finish().unwrap();
 
 	    game_state.mouse.reset();
+
+		if network.is_connected() {
+			position_interval += 1;
+			if position_interval > 30 {
+				position_interval = 0;
+				let pos = display_data.camera_position;
+				let msg = NetworkMessage::SetPosition {
+					uid: 0,
+					position: [-pos[0], -pos[1], -pos[2]],
+					rotation: display_data.camera_rotation.clone(),
+				};
+				network.send(msg).unwrap();
+			}
+		}
 
         for ev in display_data.display.poll_events() {
             match ev {

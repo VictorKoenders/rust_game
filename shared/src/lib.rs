@@ -10,12 +10,15 @@ use bincode::rustc_serialize::{ encode, decode };
 use std::io::{ Read, Write };
 use byteorder::ByteOrder;
 
-#[derive(RustcEncodable, RustcDecodable, PartialEq, Debug)]
+#[derive(RustcEncodable, RustcDecodable, PartialEq, Debug, Clone)]
 pub enum NetworkMessage {
 	None,
 	//Connect,
 	Ping,
 	PingResult(u32),
+	Identify(u32),
+	RemoveEntity { uid: u32 },
+	SetPosition { uid: u32, position: Vector3<f32>, rotation: Vector3<f32> },
 	//Login { username: String, password: String },
 	//LoginResponse(Option<User>),
 }
@@ -34,6 +37,7 @@ pub struct ClientSocket {
 	port: u16,
 	buffer: Vec<u8>,
 	buff: [u8;1024],
+	pub id: u32,
 	pub last_ping_time: f64
 }
 
@@ -43,25 +47,30 @@ pub enum ClientError {
 	Disconnected,
 }
 
+static mut LAST_ID: u32 = 0;
 impl ClientSocket {
 	pub fn create<T>(host: T, port: u16) -> ClientSocket where T : std::string::ToString{
+		unsafe { LAST_ID += 1 };
 		ClientSocket {
 			stream: None,
 			host: host.to_string(),
 			port: port,
 			buffer: Vec::new(),
 			buff: [0;1024],
+			id: unsafe { LAST_ID },
 			last_ping_time: 0f64,
 		}
 	}
 
 	pub fn from_stream(stream: TcpStream) -> ClientSocket {
+		unsafe { LAST_ID += 1 };
 		ClientSocket {
 			stream: Some(stream),
 			host: String::new(),
 			port: 0,
 			buffer: Vec::new(),
 			buff: [0;1024],
+			id:  unsafe { LAST_ID },
 			last_ping_time: 0f64,
 		}
 	}
@@ -150,7 +159,19 @@ impl ServerSocket {
 		}
 	}
 
-	pub fn listen<F>(&mut self, cb: F) where F : Fn(&mut ClientSocket, NetworkMessage) {
+	pub fn broadcast(&mut self, message: NetworkMessage) {
+		for client in self.clients.iter_mut() {
+			client.send(message.clone()).unwrap();
+		}
+	}
+
+	pub fn listen<F1, F2, F3>(&mut self,
+						  client_created_callback: F1,
+						  client_message_callback: F2,
+						  client_removed_callback: F3)
+		where F1 : Fn(&mut ClientSocket),
+			  F2 : Fn(&mut ClientSocket, NetworkMessage),
+			  F3 : Fn(&mut ClientSocket) {
 		match self.listener.accept() {
 			Err(e) => {
 				let mut no_clients_error = false;
@@ -166,7 +187,9 @@ impl ServerSocket {
 			},
 			Ok(s) => {
 				println!("Client connected: {:?}", s.1);
-				self.clients.push(ClientSocket::from_stream(s.0));
+				let mut client = ClientSocket::from_stream(s.0);
+				client_created_callback(&mut client);
+				self.clients.push(client);
 			}
 		};
 
@@ -176,7 +199,7 @@ impl ServerSocket {
 			let ref mut client = self.clients[i];
 			match client.get_message() {
 				Ok(Some(message)) => {
-					cb(client, message);
+					client_message_callback(client, message);
 				},
 				Ok(None) => {},
 				Err(ClientError::Disconnected) => {
@@ -189,9 +212,10 @@ impl ServerSocket {
 			};
 		}
 		remove_indexes.reverse();
-		for remove_index in &remove_indexes {
+		for remove_index in remove_indexes {
+			client_removed_callback(&mut self.clients[remove_index]);
 			println!("Removing at {}", remove_index);
-			self.clients.remove(*remove_index);
+			self.clients.remove(remove_index);
 		}
 	}
 }

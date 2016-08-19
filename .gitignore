@@ -8,3 +8,6 @@ server/Cargo.lock
 
 shared/target/
 shared/Cargo.lock
+
+Cargo.lock
+target/

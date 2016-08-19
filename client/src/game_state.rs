@@ -87,11 +87,11 @@ impl MouseState {
 
 	pub fn mouse_button(&mut self, button: MouseButton, state: ElementState) {
 		match state {
-			ElementState::Pressed => if let MouseButton::Left = button {
+			ElementState::Pressed => if let MouseButton::Right = button {
 				self.is_dragging = true;
 				self.desired_cursor_state = CursorState::Hide;
 			},
-			ElementState::Released => if let MouseButton::Left = button {
+			ElementState::Released => if let MouseButton::Right = button {
 				self.is_dragging = false;
 				self.desired_cursor_state = CursorState::Normal;
 			}

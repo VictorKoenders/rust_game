@@ -144,7 +144,7 @@ impl<'a> DisplayData<'a> {
     }
 }
 
-fn fps_view_matrix(position: Vector3<f32>, rotation: Vector3<f32>) -> Matrix4<f32> {
+pub fn fps_view_matrix(position: Vector3<f32>, rotation: Vector3<f32>) -> Matrix4<f32> {
 	let cos_pitch = rotation[0].cos();
 	let sin_pitch = rotation[0].sin();
 	let cos_yaw = rotation[1].cos();
