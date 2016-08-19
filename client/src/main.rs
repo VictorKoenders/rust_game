@@ -18,19 +18,47 @@ fn main() {
     let mut display_data = DisplayData::new();
 	let mut game_state = GameState::new();
     let model = Model::new(&display_data);
-	let mut network = match shared::ClientSocket::connect("localhost", 8080) {
-		Some(n) => n,
-		None => {
-			return;
-		}
-	};
+	let mut network = shared::ClientSocket::create("localhost", 8080);
 
 	let mut last_time = time::precise_time_ns();
+	let mut last_connect_time = None;
     loop {
-	    while let Some(message) = network.get_message() {
-		    println!("message: {:?}", message);
-			network.send(message);
-	    }
+		if !network.is_connected() {
+			let should_connect = match last_connect_time {
+				None => true,
+				Some(t) => time::precise_time_s() - t > 1f64
+			};
+			if should_connect {
+				if let Err(_) = network.connect() {
+					last_connect_time = Some(time::precise_time_s());
+				} else {
+					last_connect_time = None;
+				}
+			}
+		} else {
+			loop {
+				match network.get_message() {
+					Ok(Some(message)) => {
+						println!("message: {:?}", message);
+						if message == shared::NetworkMessage::Ping {
+							if let Err(e) = network.send(shared::NetworkMessage::Ping) {
+								println!("Socket error: {:?}", e);
+								network.disconnect();
+								last_connect_time = Some(time::precise_time_s());
+								break;
+							}
+						}
+					},
+					Ok(None) => break,
+					Err(e) => {
+						println!("Socket error: {:?}", e);
+						network.disconnect();
+						last_connect_time = Some(time::precise_time_s());
+						break;
+					}
+				}
+			}
+		}
 
         let time_now = time::precise_time_ns();
 	    let diff: f32 = ((time_now - last_time) / 1000) as f32;
