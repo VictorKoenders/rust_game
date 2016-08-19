@@ -22,6 +22,8 @@ pub enum NetworkMessage {
 
 #[derive(RustcEncodable, RustcDecodable, PartialEq, Debug)]
 pub struct User {
+	pub id: u32,
+	pub name: String,
 	pub position: Vector3<f32>,
 	pub rotation: Vector3<f32>,
 }

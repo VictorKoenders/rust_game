@@ -6,3 +6,5 @@ authors = ["Victor Koenders <victor.koenders@gmail.com>"]
 [dependencies]
 shared = { path = "../shared", version = "*" }
 time = "*"
+bincode = "*"
+rustc-serialize = "*"
