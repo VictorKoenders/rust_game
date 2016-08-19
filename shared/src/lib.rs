@@ -111,7 +111,7 @@ impl ClientSocket {
 			},
 			Err(e) => {
 				if let Some(os_error) = e.raw_os_error() {
-					if os_error == 10035 {
+					if os_error == 10035 || os_error == 35 {
 						return Ok(None);
 					}
 				}
@@ -176,7 +176,7 @@ impl ServerSocket {
 			Err(e) => {
 				let mut no_clients_error = false;
 				if let Some(os_error) = e.raw_os_error() {
-					if os_error == 10035 {
+					if os_error == 10035 || os_error == 35 {
 						no_clients_error = true;
 					}
 				}
