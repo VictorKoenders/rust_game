@@ -18,7 +18,7 @@ fn main() {
     let mut display_data = DisplayData::new();
 	let mut game_state = GameState::new();
     let model = Model::new(&display_data);
-	let mut network = match shared::ClientSocket::connect("localhost", 8181) {
+	let mut network = match shared::ClientSocket::connect("localhost", 8080) {
 		Some(n) => n,
 		None => {
 			return;
@@ -29,6 +29,7 @@ fn main() {
     loop {
 	    while let Some(message) = network.get_message() {
 		    println!("message: {:?}", message);
+			network.send(message);
 	    }
 
         let time_now = time::precise_time_ns();

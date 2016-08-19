@@ -1,0 +1,14 @@
+[package]
+name = "rust_game"
+version = "0.1.0"
+authors = ["Victor Koenders <victor.koenders@gmail.com>"]
+
+[dependencies]
+shared = { path = "../shared", version = "*" }
+time = "*"
+glium = "*"
+image = "*"
+vecmath = "*"
+
+[replace]
+"glutin:0.6.1" = { git = "https://github.com/tomaka/glutin.git" }

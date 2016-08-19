@@ -2,12 +2,9 @@
 
 client/target/
 client/Cargo.lock
-client/Cargo.toml
 
 server/target/
 server/Cargo.lock
-server/Cargo.toml
 
 shared/target/
 shared/Cargo.lock
-shared/Cargo.toml
