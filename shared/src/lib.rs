@@ -24,10 +24,10 @@ pub enum NetworkMessage {
 }
 
 #[cfg(windows)]
-fn no_content_code() -> u32 { 10035 }
+fn no_content_code() -> i32 { 10035 }
 
-#[cfg(any(unix))]
-fn no_content_code() -> u32 { 35 }
+#[cfg(unix)]
+fn no_content_code() -> i32 { 35 }
 
 #[derive(RustcEncodable, RustcDecodable, PartialEq, Debug)]
 pub struct User {
