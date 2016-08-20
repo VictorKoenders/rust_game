@@ -4,8 +4,10 @@ extern crate bincode;
 extern crate rustc_serialize;
 
 mod file_handler;
+mod network;
 
 use shared::*;
+use network::ServerSocket;
 use file_handler::*;
 use std::collections::HashMap;
 
@@ -57,6 +59,7 @@ fn main(){
 		}
 
 		if time::precise_time_s() - last_time > 1f64 {
+		    println!("Ping!");
 			last_time = time::precise_time_s();
 			for client in listener.clients.iter_mut() {
 				client.last_ping_time = last_time;

@@ -32,6 +32,7 @@ fn main() {
 				Some(t) => time::precise_time_s() - t > 1f64
 			};
 			if should_connect {
+                println!("Attempting to connect...");
 				if let Err(_) = network.connect() {
 					last_connect_time = Some(time::precise_time_s());
 				} else {
@@ -98,7 +99,7 @@ fn main() {
         let mut target = display_data.display.draw();
         target.clear_color_and_depth((0.0, 0.0, 1.0, 1.0), 1.0);
         model.render(&display_data, &mut target);
-		for cube in &cubes{
+		for cube in &cubes {
 			cube.render(&display_data, &mut target);
 		}
         target.finish().unwrap();
