@@ -1,9 +1,19 @@
 use glium::glutin::{ VirtualKeyCode, ElementState, MouseButton, CursorState };
-use vecmath::{ Vector2 };
+use vecmath::{ Vector2, Vector3 };
+use model::Model;
 
 pub struct GameState {
 	pub keyboard: KeyboardState,
 	pub mouse: MouseState,
+	pub player: Option<Entity>,
+	pub entities: Vec<Entity>,
+}
+
+pub struct Entity {
+	pub id: u32,
+	pub position: Vector3<f32>,
+	pub rotation: Vector3<f32>,
+	pub model: Option<Model>,
 }
 
 impl GameState {
@@ -11,6 +21,8 @@ impl GameState {
 		GameState {
 			keyboard: KeyboardState::new(),
 			mouse: MouseState::new(),
+			player: None,
+			entities: Vec::new(),
 		}
 	}
 }

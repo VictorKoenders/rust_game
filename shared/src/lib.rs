@@ -68,6 +68,18 @@ impl ClientSocket {
 		}
 	}
 
+	pub fn clone(&self) -> ClientSocket {
+		ClientSocket {
+			stream: None,
+			host: self.host.clone(),
+			port: self.port,
+			buffer: self.buffer.clone(),
+			buff: self.buff,
+			id: self.id,
+			last_ping_time: self.last_ping_time,
+		}
+	}
+
 	pub fn from_stream(stream: TcpStream) -> ClientSocket {
 		unsafe { LAST_ID += 1 };
 		ClientSocket {
