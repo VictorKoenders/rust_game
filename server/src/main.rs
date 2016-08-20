@@ -11,7 +11,7 @@ use network::ServerSocket;
 use file_handler::*;
 use std::collections::HashMap;
 
-fn main(){
+fn main() {
 	/*let mut vec = Vec::new();
 	vec.push((
 		User { position: [1.0f32, 0.0f32, 0.0f32], rotation: [0.0f32, 0.0f32, 0.0f32], id: 1, name: "Trangar".to_string() },
@@ -43,7 +43,7 @@ fn main(){
 				//println!("Ping time: {}", ping);
 				client.send(NetworkMessage::PingResult(ping)).unwrap();
 			}
-			if let NetworkMessage::SetPosition{ uid: _, position: position, rotation: rotation} = message {
+			if let NetworkMessage::SetPosition { uid: _, position: position, rotation: rotation } = message {
 				s2.send(NetworkMessage::SetPosition {
 					uid: client.id,
 					position: position,
@@ -59,7 +59,7 @@ fn main(){
 		}
 
 		if time::precise_time_s() - last_time > 1f64 {
-		    println!("Ping!");
+			println!("Ping!");
 			last_time = time::precise_time_s();
 			for client in listener.clients.iter_mut() {
 				client.last_ping_time = last_time;

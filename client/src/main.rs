@@ -16,23 +16,23 @@ use glium::glutin::VirtualKeyCode;
 use shared::*;
 
 fn main() {
-    let mut display_data = DisplayData::new();
+	let mut display_data = DisplayData::new();
 	let mut game_state = GameState::new();
-    let mut model = Model::new_cube(&display_data);
+	let mut model = Model::new_cube(&display_data);
 	let mut cubes: Vec<Model> = Vec::new();
 	let mut network = ClientSocket::create("localhost", 8080);
 
 	let mut last_time = time::precise_time_ns();
 	let mut last_connect_time = None;
 	let mut position_interval = 0;
-    loop {
+	loop {
 		if !network.is_connected() {
 			let should_connect = match last_connect_time {
 				None => true,
 				Some(t) => time::precise_time_s() - t > 1f64
 			};
 			if should_connect {
-                println!("Attempting to connect...");
+				println!("Attempting to connect...");
 				if let Err(_) = network.connect() {
 					last_connect_time = Some(time::precise_time_s());
 				} else {
@@ -54,7 +54,7 @@ fn main() {
 						if let NetworkMessage::Identify(uid) = message {
 							model.id = uid;
 						}
-						if let NetworkMessage::RemoveEntity { uid } = message{
+						if let NetworkMessage::RemoveEntity { uid } = message {
 							if let Some(index) = cubes.iter().position(|x| x.id == uid) {
 								cubes.remove(index);
 							}
@@ -90,21 +90,21 @@ fn main() {
 			}
 		}
 
-        let time_now = time::precise_time_ns();
-	    let diff: f32 = ((time_now - last_time) / 1000) as f32;
-	    last_time = time_now;
+		let time_now = time::precise_time_ns();
+		let diff: f32 = ((time_now - last_time) / 1000) as f32;
+		last_time = time_now;
 
-	    display_data.update(&game_state, diff);
+		display_data.update(&game_state, diff);
 
-        let mut target = display_data.display.draw();
-        target.clear_color_and_depth((0.0, 0.0, 1.0, 1.0), 1.0);
-        model.render(&display_data, &mut target);
+		let mut target = display_data.display.draw();
+		target.clear_color_and_depth((0.0, 0.0, 1.0, 1.0), 1.0);
+		model.render(&display_data, &mut target);
 		for cube in &cubes {
 			cube.render(&display_data, &mut target);
 		}
-        target.finish().unwrap();
+		target.finish().unwrap();
 
-	    game_state.mouse.reset();
+		game_state.mouse.reset();
 
 		if network.is_connected() {
 			position_interval += 1;
@@ -120,20 +120,20 @@ fn main() {
 			}
 		}
 
-        for ev in display_data.display.poll_events() {
-            match ev {
-                glium::glutin::Event::Closed => return,
-                glium::glutin::Event::KeyboardInput(state, _, Some(key)) => {
-	                game_state.keyboard.update(key, state);
+		for ev in display_data.display.poll_events() {
+			match ev {
+				glium::glutin::Event::Closed => return,
+				glium::glutin::Event::KeyboardInput(state, _, Some(key)) => {
+					game_state.keyboard.update(key, state);
 
-	                if game_state.keyboard.is_pressed(VirtualKeyCode::Escape) {
-                        return;
-                    }
-                }
-	            glium::glutin::Event::MouseMoved(x, y) => game_state.mouse.mouse_moved(x, y),
-	            glium::glutin::Event::MouseInput(state, button) => game_state.mouse.mouse_button(button, state),
-                _ => ()
-            }
-        }
-    }
+					if game_state.keyboard.is_pressed(VirtualKeyCode::Escape) {
+						return;
+					}
+				}
+				glium::glutin::Event::MouseMoved(x, y) => game_state.mouse.mouse_moved(x, y),
+				glium::glutin::Event::MouseInput(state, button) => game_state.mouse.mouse_button(button, state),
+				_ => ()
+			}
+		}
+	}
 }

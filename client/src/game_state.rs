@@ -1,5 +1,5 @@
-use glium::glutin::{ VirtualKeyCode, ElementState, MouseButton, CursorState };
-use vecmath::{ Vector2 };
+use glium::glutin::{VirtualKeyCode, ElementState, MouseButton, CursorState};
+use vecmath::{Vector2};
 
 pub struct GameState {
 	pub keyboard: KeyboardState,
@@ -29,19 +29,19 @@ impl KeyboardState {
 		self.keys.contains(&code)
 	}
 
-	fn add_key(&mut self, code: VirtualKeyCode){
+	fn add_key(&mut self, code: VirtualKeyCode) {
 		if !self.is_pressed(code) {
 			self.keys.push(code);
 		}
 	}
 
-	fn remove_key(&mut self, code: VirtualKeyCode){
+	fn remove_key(&mut self, code: VirtualKeyCode) {
 		if let Some(index) = self.keys.iter().position(|x| *x == code) {
 			self.keys.remove(index);
 		}
 	}
 
-	pub fn update(&mut self, code: VirtualKeyCode, state: ElementState){
+	pub fn update(&mut self, code: VirtualKeyCode, state: ElementState) {
 		match state {
 			ElementState::Pressed => self.add_key(code),
 			ElementState::Released => self.remove_key(code)
@@ -68,7 +68,7 @@ impl MouseState {
 		}
 	}
 
-	pub fn reset(&mut self){
+	pub fn reset(&mut self) {
 		self.drag_difference = [0f32, 0f32];
 		self.desired_cursor_position = None;
 	}

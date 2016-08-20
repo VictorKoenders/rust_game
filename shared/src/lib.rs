@@ -4,15 +4,21 @@ extern crate rustc_serialize;
 extern crate vecmath;
 
 use bincode::SizeLimit;
-use bincode::rustc_serialize::{ encode, decode };
+use bincode::rustc_serialize::{encode, decode};
 
 use byteorder::ByteOrder;
 
 use std::string;
 use std::net::{TcpListener, TcpStream};
-use std::io::{ Read, Write };
+use std::io::{Read, Write};
 
 use vecmath::Vector3;
+
+#[cfg(windows)]
+pub static NO_CONTENT_CODE: i32 = 10035;
+
+#[cfg(unix)]
+pub static NO_CONTENT_CODE: i32 = 35;
 
 #[derive(RustcEncodable, RustcDecodable, PartialEq, Debug, Clone)]
 pub enum NetworkMessage {
@@ -21,17 +27,17 @@ pub enum NetworkMessage {
 	Ping,
 	PingResult(u32),
 	Identify(u32),
-	RemoveEntity { uid: u32 },
-	SetPosition { uid: u32, position: Vector3<f32>, rotation: Vector3<f32> },
+	RemoveEntity {
+		uid: u32
+	},
+	SetPosition {
+		uid: u32,
+		position: Vector3<f32>,
+		rotation: Vector3<f32>
+	},
 	//Login { username: String, password: String },
 	//LoginResponse(Option<User>),
 }
-
-#[cfg(windows)]
-pub static NO_CONTENT_CODE: i32 = 10035;
-
-#[cfg(unix)]
-pub static NO_CONTENT_CODE: i32 = 35;
 
 #[derive(RustcEncodable, RustcDecodable, PartialEq, Debug)]
 pub struct User {
@@ -46,7 +52,7 @@ pub struct ClientSocket {
 	host: String,
 	port: u16,
 	buffer: Vec<u8>,
-	buff: [u8;1024],
+	buff: [u8; 1024],
 	pub id: u32,
 	pub last_ping_time: f64
 }
@@ -58,15 +64,16 @@ pub enum ClientError {
 }
 
 static mut LAST_ID: u32 = 0;
+
 impl ClientSocket {
-	pub fn create<T : string::ToString>(host: T, port: u16) -> ClientSocket {
+	pub fn create<T: string::ToString>(host: T, port: u16) -> ClientSocket {
 		unsafe { LAST_ID += 1 };
 		ClientSocket {
 			stream: None,
 			host: host.to_string(),
 			port: port,
 			buffer: Vec::new(),
-			buff: [0;1024],
+			buff: [0; 1024],
 			id: unsafe { LAST_ID },
 			last_ping_time: 0f64,
 		}
@@ -79,13 +86,16 @@ impl ClientSocket {
 			host: String::new(),
 			port: 0,
 			buffer: Vec::new(),
-			buff: [0;1024],
-			id:  unsafe { LAST_ID },
+			buff: [0; 1024],
+			id: unsafe { LAST_ID },
 			last_ping_time: 0f64,
 		}
 	}
 	pub fn is_connected(&self) -> bool {
-		match self.stream { None => false, Some(_) => true }
+		match self.stream {
+			None => false,
+			Some(_) => true
+		}
 	}
 	pub fn connect(&mut self) -> Result<(), ClientError> {
 		let stream = match TcpStream::connect(format!("{}:{}", self.host, self.port).as_str()) {
@@ -103,7 +113,7 @@ impl ClientSocket {
 		Ok(())
 	}
 
-	pub fn disconnect(&mut self){
+	pub fn disconnect(&mut self) {
 		self.stream = None;
 	}
 	pub fn get_message(&mut self) -> Result<Option<NetworkMessage>, ClientError> {
@@ -133,20 +143,20 @@ impl ClientSocket {
 			return Ok(None);
 		}
 		let len = byteorder::BigEndian::read_u32(&self.buffer.as_slice()) as usize;
-		if len + 4 <= self.buffer.len(){
-			let message: Vec<u8> = self.buffer.drain(0..4+len).skip(4).collect();
+		if len + 4 <= self.buffer.len() {
+			let message: Vec<u8> = self.buffer.drain(0..4 + len).skip(4).collect();
 			let decoded: NetworkMessage = decode(&message).unwrap();
 			return Ok(Some(decoded));
 		}
 		Ok(None)
 	}
-	pub fn send(&mut self, message: NetworkMessage) -> Result<(), ClientError>{
+	pub fn send(&mut self, message: NetworkMessage) -> Result<(), ClientError> {
 		let mut stream = match self.stream {
 			Some(ref s) => s,
 			None => return Err(ClientError::Disconnected)
 		};
 		let bytes = encode(&message, SizeLimit::Infinite).unwrap();
-		let mut len_bytes: [u8;4] = [0;4];
+		let mut len_bytes: [u8; 4] = [0; 4];
 		byteorder::BigEndian::write_u32(&mut len_bytes, bytes.len() as u32);
 
 		if stream.write(&len_bytes).is_err() { return Err(ClientError::Disconnected); }

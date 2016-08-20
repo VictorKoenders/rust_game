@@ -1,7 +1,7 @@
 use shared::User;
 use std::fs::OpenOptions;
 use std::io::Read;
-use bincode::rustc_serialize::{ encode, decode };
+use bincode::rustc_serialize::{encode, decode};
 use bincode::SizeLimit;
 
 #[derive(RustcEncodable, RustcDecodable, PartialEq, Debug)]
@@ -10,8 +10,7 @@ pub struct UserPassword {
 	pub password: String,
 }
 
-pub struct FileHandler {
-}
+pub struct FileHandler {}
 
 impl FileHandler {
 	pub fn load_users() -> Vec<(User, UserPassword)> {
@@ -28,7 +27,7 @@ impl FileHandler {
 		}
 	}
 
-	pub fn save_users(users: &Vec<(User, UserPassword)>){
+	pub fn save_users(users: &Vec<(User, UserPassword)>) {
 		let data: Vec<u8> = encode(users, SizeLimit::Infinite).unwrap();
 		println!("Data: {:?}", data);
 	}
