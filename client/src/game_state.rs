@@ -1,5 +1,5 @@
 use glium::glutin::{ VirtualKeyCode, ElementState, MouseButton, CursorState };
-use vecmath::{ Vector2, Vector3 };
+use vecmath::{ Vector2, Vector3, vec3_normalized, vec3_square_len };
 use model::Model;
 
 pub struct GameState {
@@ -16,13 +16,63 @@ pub struct Entity {
 	pub model: Option<Model>,
 }
 
+const MOVE_SPEED: f32 = 5f32;
+const ROTATE_SPEED: f32 = 0.005f32;
+
 impl GameState {
 	pub fn new() -> GameState {
 		GameState {
 			keyboard: KeyboardState::new(),
 			mouse: MouseState::new(),
-			player: None,
+			player: Some(Entity { id: 0, position: [0.0, 0.0, -10.0], rotation: [0.0, 0.0, 0.0], model: None }),
 			entities: Vec::new(),
+		}
+	}
+
+	pub fn update(&mut self, delta_time: f32) {
+		if let Some(ref mut player) = self.player {
+
+			let mut transformation = [0.0f32, 0.0f32, 0.0f32];
+			let mut rotation = [0.0f32, 0.0f32, 0.0f32];
+			if self.keyboard.is_pressed(VirtualKeyCode::A) {
+				transformation[0] -= 1.0f32;
+			}
+			if self.keyboard.is_pressed(VirtualKeyCode::D) {
+				transformation[0] += 1.0f32;
+			}
+			if self.keyboard.is_pressed(VirtualKeyCode::W) {
+				transformation[2] += 1.0f32;
+			}
+			if self.keyboard.is_pressed(VirtualKeyCode::S) {
+				transformation[2] -= 1.0f32;
+			}
+			if self.mouse.is_dragging {
+				rotation[0] = self.mouse.drag_difference[1];
+				rotation[1] = self.mouse.drag_difference[0];
+			}
+
+			player.rotation[0] += rotation[0] * ROTATE_SPEED;
+			player.rotation[1] += rotation[1] * ROTATE_SPEED;
+			player.rotation[2] += rotation[2] * ROTATE_SPEED;
+
+			if vec3_square_len(transformation) != 0.0f32 {
+				transformation = vec3_normalized(transformation);
+			}
+
+			let rotated_transformation = {
+				let sin_angle = (-player.rotation[1]).sin();
+				let cos_angle = (-player.rotation[1]).cos();
+
+				[
+					transformation[0] * cos_angle - transformation[2] * sin_angle,
+					0.0f32,
+					transformation[0] * sin_angle + transformation[2] * cos_angle
+				]
+			};
+
+			player.position[0] += rotated_transformation[0] * delta_time / 1_000_000f32 * MOVE_SPEED;
+			player.position[1] += rotated_transformation[1] * delta_time / 1_000_000f32 * MOVE_SPEED;
+			player.position[2] += rotated_transformation[2] * delta_time / 1_000_000f32 * MOVE_SPEED;
 		}
 	}
 }

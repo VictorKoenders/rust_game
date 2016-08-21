@@ -19,7 +19,7 @@ use model::Model;
 fn main() {
     let mut display_data = DisplayData::new();
 	let mut game_state = GameState::new();
-    let mut model = Model::new_cube(&display_data);
+    let model = Model::new_cube(&display_data);
 	let mut network = network::Network::new();
 
 	let mut last_time = time::precise_time_ns();
@@ -29,7 +29,8 @@ fn main() {
 	    let diff: f32 = ((time_now - last_time) / 1000) as f32;
 	    last_time = time_now;
 
-	    display_data.update(&mut game_state, diff);
+		game_state.update(diff);
+	    display_data.update(&mut game_state);
 		network.update(&mut game_state);
 
         let mut target = display_data.display.draw();

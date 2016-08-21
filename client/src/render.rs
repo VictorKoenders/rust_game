@@ -1,14 +1,11 @@
 use glium::{DisplayBuild, Program, DrawParameters, Depth};
 use glium::draw_parameters::DepthTest;
 use glium::backend::glutin_backend::{GlutinFacade, WinRef};
-use glium::glutin::{ WindowBuilder, VirtualKeyCode, CursorState };
+use glium::glutin::{ WindowBuilder, CursorState };
 use std::f32::consts;
 use game_state::GameState;
-use vecmath::{ Vector3, Matrix4, vec3_dot, mat4_id, vec3_normalized, vec3_square_len };
+use vecmath::{ Vector3, Matrix4, vec3_dot, mat4_id };
 use model::Model;
-
-const MOVE_SPEED: f32 = 5f32;
-const ROTATE_SPEED: f32 = 0.005f32;
 
 pub struct DisplayData<'a> {
     pub display: GlutinFacade,
@@ -80,7 +77,7 @@ impl<'a> DisplayData<'a> {
         }
     }
 
-    pub fn update(&mut self, game_state: &mut GameState, delta_time: f32){
+    pub fn update(&mut self, game_state: &mut GameState){
 	    if let Some(position) = game_state.mouse.desired_cursor_position {
 			self.display.get_window().unwrap().set_cursor_position(position[0] as i32, position[1] as i32).unwrap();
 	    }
@@ -102,58 +99,19 @@ impl<'a> DisplayData<'a> {
 			if let None = player.model {
 				player.model = Some(Model::new_cube(self));
 			}
-
-			let mut transformation = [0.0f32, 0.0f32, 0.0f32];
-			let mut rotation = [0.0f32, 0.0f32, 0.0f32];
-			if game_state.keyboard.is_pressed(VirtualKeyCode::A) {
-				transformation[0] -= 1.0f32;
-			}
-			if game_state.keyboard.is_pressed(VirtualKeyCode::D) {
-				transformation[0] += 1.0f32;
-			}
-			if game_state.keyboard.is_pressed(VirtualKeyCode::W) {
-				transformation[2] += 1.0f32;
-			}
-			if game_state.keyboard.is_pressed(VirtualKeyCode::S) {
-				transformation[2] -= 1.0f32;
-			}
-			if game_state.mouse.is_dragging {
-				rotation[0] = game_state.mouse.drag_difference[1];
-				rotation[1] = game_state.mouse.drag_difference[0];
-			}
-
-			player.rotation[0] += rotation[0] * ROTATE_SPEED;
-			player.rotation[1] += rotation[1] * ROTATE_SPEED;
-			player.rotation[2] += rotation[2] * ROTATE_SPEED;
-
-			if vec3_square_len(transformation) != 0.0f32 {
-				transformation = vec3_normalized(transformation);
-			}
-
-			let rotated_transformation = {
-				let sin_angle = (-player.rotation[1]).sin();
-				let cos_angle = (-player.rotation[1]).cos();
-
-				[
-					transformation[0] * cos_angle - transformation[2] * sin_angle,
-					0.0f32,
-					transformation[0] * sin_angle + transformation[2] * cos_angle
-				]
-			};
-
-			player.position[0] += rotated_transformation[0] * delta_time / 1_000_000f32 * MOVE_SPEED;
-			player.position[1] += rotated_transformation[1] * delta_time / 1_000_000f32 * MOVE_SPEED;
-			player.position[2] += rotated_transformation[2] * delta_time / 1_000_000f32 * MOVE_SPEED;
 		}
-
 		for mut entity in game_state.entities.iter_mut().filter(|e| e.model.is_none()){
 			entity.model = Some(Model::new_cube(self));
 		}
 
 		// TODO: Make the camera follow the player
+		if let Some(ref player) = game_state.player {
+			self.camera_position = player.position;
+			// TODO: Rotate the camera based on the player position
+			self.camera_position[2] -= 1f32;
+			self.camera_rotation = player.rotation;
+		}
 	    self.view = fps_view_matrix(self.camera_position, self.camera_rotation);
-
-
     }
 }
 

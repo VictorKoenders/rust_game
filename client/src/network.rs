@@ -9,6 +9,7 @@ pub struct Network {
 	last_connect_time: Option<f64>,
 	is_connecting: bool,
 	connect_receiver: Option<Receiver<ClientSocket>>,
+	last_send_messages: Vec<(NetworkMessage, u64)>,
 }
 
 impl Network {
@@ -17,7 +18,8 @@ impl Network {
 			socket: ClientSocket::create("localhost", 8080),
 			last_connect_time: None,
 			is_connecting: false,
-			connect_receiver: None
+			connect_receiver: None,
+			last_send_messages: Vec::new(),
 		}
 	}
 
@@ -50,7 +52,7 @@ impl Network {
 			self.connect_receiver = Some(receiver);
 			let mut clone = self.socket.clone();
 			thread::spawn(move ||{
-				clone.connect().unwrap();
+				clone.connect().unwrap_or_else(|_|());
 				sender.send(clone).unwrap();
 			});
 		}
@@ -104,14 +106,23 @@ impl Network {
 		}
 	}
 
-	pub fn send_throttled(&mut self, message: NetworkMessage, delay_in_ms: u32){
-		// TODO: Implement
+	pub fn send_throttled(&mut self, message: NetworkMessage, delay_in_ms: u64){
+		let position = self.last_send_messages.iter_mut().position(|x| x.0.is_same_type_as(&message)).unwrap_or_else(||self.last_send_messages.len());
+		if position != self.last_send_messages.len() {
+			let time = self.last_send_messages[position].1;
+			if time > ::time::precise_time_ns() - delay_in_ms * 1_000_000u64 {
+				return;
+			}
+			self.last_send_messages.remove(position);
+		}
+		self.last_send_messages.push((message.clone(), time::precise_time_ns()));
 		self.send(message);
 	}
 
 	pub fn send(&mut self, message: NetworkMessage){
 		if self.socket.is_connected() {
 			self.socket.send(message).unwrap();
+
 		}
 	}
 
