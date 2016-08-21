@@ -27,6 +27,7 @@ impl From<SendError<NetworkMessage>> for ServerError {
 	}
 }
 
+// See main.rs for TODO's
 impl ServerSocket {
 	pub fn create<T: string::ToString>(host: T, port: i32) -> ServerSocket {
 		let address = format!("{}:{}", host.to_string(), port);
@@ -39,8 +40,6 @@ impl ServerSocket {
 			clients: Vec::new(),
 		}
 	}
-
-	//pub fn send_with() {}
 
 	pub fn broadcast(&mut self, message: NetworkMessage) {
 		for client in self.clients.iter_mut() {

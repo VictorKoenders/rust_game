@@ -59,6 +59,8 @@ impl Network {
 	}
 
 	fn handle_message(&mut self, message: NetworkMessage, game_state: &mut GameState){
+		// TODO: Find a better solution for this
+		// because this function is going to be massive if we all put it in here
 		if message == NetworkMessage::Ping {
 			if let Err(e) = self.socket.send(NetworkMessage::Ping) {
 				println!("Socket error: {:?}", e);
@@ -121,8 +123,9 @@ impl Network {
 
 	pub fn send(&mut self, message: NetworkMessage){
 		if self.socket.is_connected() {
+			// TODO: Handle error message?
+			// TODO: Disconnect on error?
 			self.socket.send(message).unwrap();
-
 		}
 	}
 

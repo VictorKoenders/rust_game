@@ -12,11 +12,15 @@ pub struct DisplayData<'a> {
 	pub program: Program,
 	pub perspective: Matrix4<f32>,
 
+	// TODO: Move this to a seperate camera struct
 	pub camera_position: Vector3<f32>,
 	pub camera_rotation: Vector3<f32>,
 
 	pub view: Matrix4<f32>,
 	pub light: Vector3<f32>,
+
+	// TODO: These draw parameters are only used in a 3D context
+	// so; make that 3D context
 	pub draw_parameters: DrawParameters<'a>,
 
 	current_cursor_state: Option<CursorState>,
@@ -37,22 +41,10 @@ impl<'a> DisplayData<'a> {
 			let window: WinRef = display.get_window().unwrap();
 			let (width, height) = window.get_inner_size_pixels().unwrap();
 
-			let aspect_ratio = height as f32 / width as f32;
-
-			let fov: f32 = consts::PI / 3.0;
-			let zfar = 1024.0;
-			let znear = 0.1;
-
-			let f = 1.0 / (fov / 2.0).tan();
-
-			[
-				[f * aspect_ratio, 0.0, 0.0, 0.0],
-				[0.0, f, 0.0, 0.0],
-				[0.0, 0.0, (zfar + znear) / (zfar - znear), 1.0],
-				[0.0, 0.0, -(2.0 * zfar * znear) / (zfar - znear), 0.0],
-			]
+			DisplayData::get_perspective(width, height)
 		};
 
+		// TODO: Do something with the light
 		let light = [1.4, 0.4, 0.7f32];
 
 		let params = DrawParameters {
@@ -77,6 +69,32 @@ impl<'a> DisplayData<'a> {
 		}
 	}
 
+	pub fn get_screen_dimensions(&self) -> (u32, u32) {
+		// TODO: error checking?
+		self.display.get_window().unwrap().get_inner_size_pixels().unwrap()
+	}
+
+	pub fn resize(&mut self, width: u32, height: u32) {
+		self.perspective = DisplayData::get_perspective(width, height);
+	}
+
+	fn get_perspective(width: u32, height: u32) -> Matrix4<f32> {
+		let aspect_ratio = height as f32 / width as f32;
+
+		let fov: f32 = consts::PI / 3.0;
+		let zfar = 1024.0;
+		let znear = 0.1;
+
+		let f = 1.0 / (fov / 2.0).tan();
+
+		[
+			[f * aspect_ratio, 0.0, 0.0, 0.0],
+			[0.0, f, 0.0, 0.0],
+			[0.0, 0.0, (zfar + znear) / (zfar - znear), 1.0],
+			[0.0, 0.0, -(2.0 * zfar * znear) / (zfar - znear), 0.0],
+		]
+	}
+
     pub fn update(&mut self, game_state: &mut GameState){
 	    if let Some(position) = game_state.mouse.desired_cursor_position {
 			self.display.get_window().unwrap().set_cursor_position(position[0] as i32, position[1] as i32).unwrap();
@@ -97,17 +115,19 @@ impl<'a> DisplayData<'a> {
 
 		if let Some(ref mut player) = game_state.player {
 			if let None = player.model {
+				// TODO: I don't think this ever gets reached
 				player.model = Some(Model::new_cube(self));
 			}
 		}
 		for mut entity in game_state.entities.iter_mut().filter(|e| e.model.is_none()){
+			// TODO: We should load the model when the entity gets created
 			entity.model = Some(Model::new_cube(self));
 		}
 
 		// TODO: Make the camera follow the player
 		if let Some(ref player) = game_state.player {
 			self.camera_position = player.position;
-			// TODO: Rotate the camera based on the player position
+			// TODO: Make the camera movable around the player
 			self.camera_position[2] -= 1f32;
 			self.camera_rotation = player.rotation;
 		}

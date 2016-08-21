@@ -10,11 +10,10 @@ mod game_state;
 mod network;
 mod ui;
 
-use ui::UIElement;
 use game_state::GameState;
 use render::*;
 use glium::Surface;
-use glium::glutin::VirtualKeyCode;
+use glium::glutin::{VirtualKeyCode, Event};
 use shared::*;
 use model::Model;
 
@@ -25,7 +24,7 @@ fn main() {
 	let mut network = network::Network::new();
 
 	let mut last_time = time::precise_time_ns();
-	let panel = ui::Panel::new(&display_data);
+	let mut ui = ui::UI::new(&display_data);
     loop {
 
 		let time_now = time::precise_time_ns();
@@ -50,7 +49,7 @@ fn main() {
 			}
 		}
 
-		panel.draw(&mut target);
+	    ui.render(&mut target);
 
         target.finish().unwrap();
 
@@ -64,20 +63,30 @@ fn main() {
 			}, 200);
 		}
 
+	    let mut new_size = None;
 		for ev in display_data.display.poll_events() {
+			// TODO: Move all the logic to the elements that decide on it
+			// And allow certain elements to override each other
+			// For example: When typing in a textbox, you don't want to move your character or hit any other buttons
 			match ev {
-				glium::glutin::Event::Closed => return,
-				glium::glutin::Event::KeyboardInput(state, _, Some(key)) => {
+				Event::Closed => return,
+				Event::KeyboardInput(state, _, Some(key)) => {
 					game_state.keyboard.update(key, state);
 
 					if game_state.keyboard.is_pressed(VirtualKeyCode::Escape) {
 						return;
 					}
 				}
-				glium::glutin::Event::MouseMoved(x, y) => game_state.mouse.mouse_moved(x, y),
-				glium::glutin::Event::MouseInput(state, button) => game_state.mouse.mouse_button(button, state),
+				Event::MouseMoved(x, y) => game_state.mouse.mouse_moved(x, y, display_data.get_screen_dimensions()),
+				Event::MouseInput(state, button) => game_state.mouse.mouse_button(button, state),
+				Event::Resized(width, height) => new_size = Some((width, height)),
 				_ => ()
 			}
+		}
+
+	    if let Some(size) = new_size {
+		    display_data.resize(size.0, size.1);
+		    ui.resize(&display_data, size.0, size.1);
 		}
 	}
 }

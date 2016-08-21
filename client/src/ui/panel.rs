@@ -15,12 +15,9 @@ pub struct Panel {
 	program: Program,
 }
 
-impl UIElement for Panel {
-	fn draw(&self, target: &mut Frame) {
-		target.draw(&self.shape, NoIndices(PrimitiveType::TriangleStrip), &self.program,
-					&uniform! { diffuse_tex: &self.texture },
-					&DrawParameters::default()).unwrap();
-	}
+#[inline]
+fn get_dimension(val: u32, total: u32) -> f32 {
+	(val as f32) / (total as f32) * 2.0 - 1.0
 }
 
 impl Panel {
@@ -31,35 +28,61 @@ impl Panel {
 	}
 
 	pub fn new(display: &DisplayData) -> Panel {
-		let texture = Panel::load_image(include_bytes!("../../assets/blank.png"), image::PNG);
+		// TODO: Load the textures from a TextureManager
+		let texture = Panel::load_image(include_bytes!("../../assets/tuto-14-diffuse.jpg"), image::JPEG);
 		let texture = SrgbTexture2d::new(&display.display, texture).unwrap();
 
-		let vertex_shader_src = r#"
-			#version 140
-			in vec2 position;
-			void main() {
-				gl_Position = vec4(position, 0.0, 1.0);
-			}
-		"#;
-
-			let fragment_shader_src = r#"
-			#version 140
-			out vec4 color;
-			void main() {
-				color = vec4(1.0, 0.0, 0.0, 1.0);
-			}
-		"#;
+		// TODO: Store this in a 2D drawing state
+		let vertex_shader_src = include_str!("../../assets/ui.vert");
+		let fragment_shader_src = include_str!("../../assets/ui.frag");
 		let program = Program::from_source(&display.display, vertex_shader_src, fragment_shader_src, None).unwrap();
 
-		Panel {
-			shape: VertexBuffer::new(&display.display, &[
-				Vertex2D { position: [-0.1, -0.1], tex_coords: [0.0, 0.0] },
-				Vertex2D { position: [ 0.1, -0.1], tex_coords: [1.0, 0.0] },
-				Vertex2D { position: [-0.1,  0.1], tex_coords: [0.0, 1.0] },
-				Vertex2D { position: [ 0.1,  0.1], tex_coords: [1.0, 1.0] },
-			]).unwrap(),
+		let mut result = Panel {
+			shape: VertexBuffer::new(&display.display, &[]).unwrap(),
 			texture: texture,
 			program: program,
-		}
+		};
+		let dimensions = display.display.get_window().unwrap().get_inner_size_pixels().unwrap();
+		result.window_size_changed(display, dimensions.0, dimensions.1);
+		result
+	}
+}
+
+impl UIElement for Panel {
+	fn draw(&self, target: &mut Frame) {
+		// TODO: Draw a nice border around the panel
+		// TODO: Draw a nice background
+		// see: http://i1057.photobucket.com/albums/t398/Duvvel/senatry/67b655d5.jpg
+		target.draw(
+			&self.shape,
+			NoIndices(PrimitiveType::TriangleStrip),
+			&self.program,
+			&uniform! { tex: &self.texture },
+			&DrawParameters::default()
+		).unwrap();
+	}
+
+	fn window_size_changed(&mut self, display: &DisplayData, width: u32, height: u32) {
+		// TODO: Move this logic to a handler in UI, seeing as all UI elements are a rectangle of some sort
+		// TODO: including an anchor position:
+		//		 - top, vertical_center, bottom
+		//		 - left, horizontal_center, right
+
+		let desired_x = 50;
+		let desired_y = 50;
+		let desired_width = 200;
+		let desired_height = 200;
+
+		let left = get_dimension(desired_x, width);
+		let top = get_dimension(desired_y, height);
+		let right = get_dimension(desired_x + desired_width, width);
+		let bottom = get_dimension(desired_y + desired_height, height);
+
+		self.shape = VertexBuffer::new(&display.display, &[
+			Vertex2D { position: [left, top], tex_coords: [0.0, 0.0] },
+			Vertex2D { position: [right, top], tex_coords: [1.0, 0.0] },
+			Vertex2D { position: [left, bottom], tex_coords: [0.0, 1.0] },
+			Vertex2D { position: [right, bottom], tex_coords: [1.0, 1.0] },
+		]).unwrap();
 	}
 }

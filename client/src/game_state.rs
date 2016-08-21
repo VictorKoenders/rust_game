@@ -1,7 +1,11 @@
-use glium::glutin::{ VirtualKeyCode, ElementState, MouseButton, CursorState };
+use glium::glutin::{VirtualKeyCode, ElementState, MouseButton, CursorState};
 use vecmath::{ Vector2, Vector3, vec3_normalized, vec3_square_len };
 use model::Model;
 
+// TODO: attach a move speed to an entity
+const MOVE_SPEED: f32 = 5f32;
+// TODO: Make this a config variable so the user can change it
+const ROTATE_SPEED: f32 = 0.005f32;
 
 pub struct GameState {
 	pub keyboard: KeyboardState,
@@ -9,16 +13,6 @@ pub struct GameState {
 	pub player: Option<Entity>,
 	pub entities: Vec<Entity>,
 }
-
-pub struct Entity {
-	pub id: u32,
-	pub position: Vector3<f32>,
-	pub rotation: Vector3<f32>,
-	pub model: Option<Model>,
-}
-
-const MOVE_SPEED: f32 = 5f32;
-const ROTATE_SPEED: f32 = 0.005f32;
 
 impl GameState {
 	pub fn new() -> GameState {
@@ -78,6 +72,15 @@ impl GameState {
 	}
 }
 
+// TODO: Move this to it's own file
+pub struct Entity {
+	pub id: u32,
+	pub position: Vector3<f32>,
+	pub rotation: Vector3<f32>,
+	pub model: Option<Model>,
+}
+
+// TODO: Move this to it's own file
 pub struct KeyboardState {
 	keys: Vec<VirtualKeyCode>,
 }
@@ -112,6 +115,7 @@ impl KeyboardState {
 	}
 }
 
+// TODO: Move this to it's own file
 pub struct MouseState {
 	pub drag_difference: Vector2<f32>,
 	pub is_dragging: bool,
@@ -136,7 +140,10 @@ impl MouseState {
 		self.desired_cursor_position = None;
 	}
 
-	pub fn mouse_moved(&mut self, x: i32, y: i32) {
+	pub fn mouse_moved(&mut self, x: i32, y: i32, screen_size: (u32, u32)) {
+		// TODO: The mouse doesn't show a resize cursor when it's next to the border of the window
+		// Maybe this is a setting somewhere?
+		// Otherwise we have to manually set the cursor: http://tomaka.github.io/glium/glium/glutin/enum.MouseCursor.html
 		if self.is_dragging {
 			self.drag_difference = [
 				x as f32 - self.last_mouse_position[0],
