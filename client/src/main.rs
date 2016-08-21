@@ -7,117 +7,56 @@ extern crate shared;
 mod render;
 mod model;
 mod game_state;
+mod network;
 
 use game_state::GameState;
 use render::*;
-use model::*;
 use glium::Surface;
 use glium::glutin::VirtualKeyCode;
 use shared::*;
+use model::Model;
 
 fn main() {
 	let mut display_data = DisplayData::new();
 	let mut game_state = GameState::new();
-	let mut model = Model::new_cube(&display_data);
-	let mut cubes: Vec<Model> = Vec::new();
-	let mut network = ClientSocket::create("localhost", 8080);
+    let model = Model::new_cube(&display_data);
+	let mut network = network::Network::new();
 
 	let mut last_time = time::precise_time_ns();
-	let mut last_connect_time = None;
-	let mut position_interval = 0;
-	loop {
-		if !network.is_connected() {
-			let should_connect = match last_connect_time {
-				None => true,
-				Some(t) => time::precise_time_s() - t > 1f64
-			};
-			if should_connect {
-				println!("Attempting to connect...");
-				if let Err(_) = network.connect() {
-					last_connect_time = Some(time::precise_time_s());
-				} else {
-					last_connect_time = None;
-				}
-			}
-		} else {
-			loop {
-				match network.get_message() {
-					Ok(Some(message)) => {
-						if message == NetworkMessage::Ping {
-							if let Err(e) = network.send(NetworkMessage::Ping) {
-								println!("Socket error: {:?}", e);
-								network.disconnect();
-								last_connect_time = Some(time::precise_time_s());
-								break;
-							}
-						}
-						if let NetworkMessage::Identify(uid) = message {
-							model.id = uid;
-						}
-						if let NetworkMessage::RemoveEntity { uid } = message {
-							if let Some(index) = cubes.iter().position(|x| x.id == uid) {
-								cubes.remove(index);
-							}
-						}
-						if let NetworkMessage::SetPosition { uid, position, rotation: _ } = message {
-							if uid != model.id {
-								let mut found = false;
-								{
-									let item = cubes.iter_mut().find(|c| c.id == uid);
-									if let Some(c) = item {
-										c.position = position;
-										found = true;
-									}
-								}
-								if !found {
-									let mut c = Model::new_cube(&display_data);
-									c.id = uid;
-									c.position = position;
-									c.scale = [0.1, 0.1, 0.1];
-									cubes.push(c);
-								}
-							}
-						}
-					},
-					Ok(None) => break,
-					Err(e) => {
-						println!("Socket error: {:?}", e);
-						network.disconnect();
-						last_connect_time = Some(time::precise_time_s());
-						break;
-					}
-				}
-			}
-		}
+    loop {
 
 		let time_now = time::precise_time_ns();
 		let diff: f32 = ((time_now - last_time) / 1000) as f32;
 		last_time = time_now;
 
-		display_data.update(&game_state, diff);
+		game_state.update(diff);
+	    display_data.update(&mut game_state);
+		network.update(&mut game_state);
 
-		let mut target = display_data.display.draw();
-		target.clear_color_and_depth((0.0, 0.0, 1.0, 1.0), 1.0);
-		model.render(&display_data, &mut target);
-		for cube in &cubes {
-			cube.render(&display_data, &mut target);
+        let mut target = display_data.display.draw();
+        target.clear_color_and_depth((0.0, 0.0, 1.0, 1.0), 1.0);
+		if let Some(ref player) = game_state.player {
+			if let Some(ref model) = player.model {
+				model.render(&display_data, &mut target);
+			}
 		}
-		target.finish().unwrap();
+		for entity in &game_state.entities {
+			if let Some(ref model) = entity.model {
+				model.render(&display_data, &mut target);
+			}
+		}
+		model.render(&display_data, &mut target);
+
+        target.finish().unwrap();
 
 		game_state.mouse.reset();
 
-		if network.is_connected() {
-			position_interval += 1;
-			if position_interval > 30 {
-				position_interval = 0;
-				let pos = display_data.camera_position;
-				let msg = NetworkMessage::SetPosition {
-					uid: 0,
-					position: [-pos[0], -pos[1], -pos[2]],
-					rotation: display_data.camera_rotation.clone(),
-				};
-				network.send(msg).unwrap();
-			}
+		if let Some(ref player) = game_state.player {
+			network.send_throttled(NetworkMessage::SetPosition {
+				uid: 0,
+				position: [player.position[0], player.position[1], player.position[2]],
+				rotation: display_data.camera_rotation.clone(),
+			}, 200);
 		}
 
 		for ev in display_data.display.poll_events() {

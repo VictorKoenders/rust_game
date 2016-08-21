@@ -10,9 +10,12 @@ pub struct UserPassword {
 	pub password: String,
 }
 
-pub struct FileHandler {}
+#[allow(dead_code)] // TODO: Implement
+pub struct FileHandler {
+}
 
 impl FileHandler {
+	#[allow(dead_code)] // TODO: Implement
 	pub fn load_users() -> Vec<(User, UserPassword)> {
 		if let Ok(mut file) = OpenOptions::new().read(true).open("users.dat") {
 			let mut data = Vec::new();
@@ -27,6 +30,7 @@ impl FileHandler {
 		}
 	}
 
+	#[allow(dead_code)] // TODO: Implement
 	pub fn save_users(users: &Vec<(User, UserPassword)>) {
 		let data: Vec<u8> = encode(users, SizeLimit::Infinite).unwrap();
 		println!("Data: {:?}", data);

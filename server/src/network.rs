@@ -1,14 +1,30 @@
-extern crate shared;
-
-use std::fmt;
 use std::string;
-use std::net::{TcpListener, ToSocketAddrs};
+use std::net::TcpListener;
+use std::sync::mpsc::SendError;
 
 use shared::{ClientSocket, NetworkMessage, ClientError, NO_CONTENT_CODE};
 
 pub struct ServerSocket {
 	listener: TcpListener,
 	pub clients: Vec<ClientSocket>,
+}
+
+#[derive(Debug)]
+pub enum ServerError {
+	CouldNotAcceptSocket,
+	ClientError(ClientError),
+	ThreadError,
+}
+
+impl From<ClientError> for ServerError {
+	fn from(err: ClientError) -> ServerError {
+		ServerError::ClientError(err)
+	}
+}
+impl From<SendError<NetworkMessage>> for ServerError {
+	fn from(_: SendError<NetworkMessage>) -> ServerError {
+		ServerError::ThreadError
+	}
 }
 
 impl ServerSocket {
@@ -24,7 +40,7 @@ impl ServerSocket {
 		}
 	}
 
-	pub fn send_with() {}
+	//pub fn send_with() {}
 
 	pub fn broadcast(&mut self, message: NetworkMessage) {
 		for client in self.clients.iter_mut() {
@@ -33,12 +49,12 @@ impl ServerSocket {
 	}
 
 	pub fn listen<F1, F2, F3>(&mut self,
-							  client_created_callback: F1,
-							  client_message_callback: F2,
-							  client_removed_callback: F3)
-							  where F1: Fn(&mut ClientSocket),
-									F2: Fn(&mut ClientSocket, NetworkMessage),
-									F3: Fn(&mut ClientSocket) {
+	                          client_created_callback: F1,
+	                          client_message_callback: F2,
+	                          client_removed_callback: F3) -> Result<(), ServerError>
+	                          where F1 : Fn(&mut ClientSocket) -> Result<(), ServerError>,
+	                                F2 : Fn(&mut ClientSocket, NetworkMessage) -> Result<(), ServerError>,
+	                                F3 : Fn(&mut ClientSocket) -> Result<(), ServerError> {
 		match self.listener.accept() {
 			Err(e) => {
 				let mut no_clients_error = false;
@@ -49,24 +65,24 @@ impl ServerSocket {
 				}
 				if !no_clients_error {
 					println!("{:?}", e);
-					return;
+					return Err(ServerError::CouldNotAcceptSocket);
 				}
 			},
 			Ok(s) => {
 				println!("Client connected: {:?}", s.1);
 				let mut client = ClientSocket::from_stream(s.0);
-				client_created_callback(&mut client);
+				try!(client_created_callback(&mut client));
 				self.clients.push(client);
 			}
 		};
 
-		let mut remove_indexes = Vec::new();
+		let mut remove_indexes: Vec<usize> = Vec::new();
 
 		for i in 0..self.clients.len() {
 			let ref mut client = self.clients[i];
 			match client.get_message() {
 				Ok(Some(message)) => {
-					client_message_callback(client, message);
+					try!(client_message_callback(client, message));
 				},
 				Ok(None) => {},
 				Err(ClientError::Disconnected) => {
@@ -80,9 +96,10 @@ impl ServerSocket {
 		}
 		remove_indexes.reverse();
 		for remove_index in remove_indexes {
-			client_removed_callback(&mut self.clients[remove_index]);
+			try!(client_removed_callback(&mut self.clients[remove_index]));
 			println!("Removing at {}", remove_index);
 			self.clients.remove(remove_index);
 		}
+		Ok(())
 	}
 }

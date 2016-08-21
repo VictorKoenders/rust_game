@@ -5,13 +5,13 @@ use std::io::Cursor;
 use image;
 use glium::index::{NoIndices, PrimitiveType};
 use glium::Surface;
-use vecmath::{Vector2, Vector3, Matrix4, col_mat4_mul};
+use vecmath::{ Vector2, Vector3, col_mat4_mul };
 
 pub struct Model {
-	shape: VertexBuffer<Vertex>,
-	matrix: Matrix4<f32>,
-	diffuse_texture: SrgbTexture2d,
-	normal_texture: Texture2d,
+    shape: VertexBuffer<Vertex>,
+    //matrix: Matrix4<f32>,
+    diffuse_texture: SrgbTexture2d,
+    normal_texture: Texture2d,
 
 	pub id: u32,
 	pub position: Vector3<f32>,
@@ -20,29 +20,29 @@ pub struct Model {
 }
 
 impl Model {
-	pub fn new(display: &DisplayData) -> Model {
-		let shape = VertexBuffer::new(&display.display, &[
-			Vertex { position: [-1.0, 1.0, 0.0], normal: [0.0, 0.0, -1.0], tex_coords: [0.0, 1.0] },
-			Vertex { position: [1.0, 1.0, 0.0], normal: [0.0, 0.0, -1.0], tex_coords: [1.0, 1.0] },
-			Vertex { position: [-1.0, -1.0, 0.0], normal: [0.0, 0.0, -1.0], tex_coords: [0.0, 0.0] },
-			Vertex { position: [1.0, -1.0, 0.0], normal: [0.0, 0.0, -1.0], tex_coords: [1.0, 0.0] },
-		]).unwrap();
+    /*pub fn new(display: &DisplayData) -> Model {
+        let shape = VertexBuffer::new(&display.display, &[
+            Vertex { position: [-1.0,  1.0, 0.0], normal: [0.0, 0.0, -1.0], tex_coords: [0.0, 1.0] },
+            Vertex { position: [ 1.0,  1.0, 0.0], normal: [0.0, 0.0, -1.0], tex_coords: [1.0, 1.0] },
+            Vertex { position: [-1.0, -1.0, 0.0], normal: [0.0, 0.0, -1.0], tex_coords: [0.0, 0.0] },
+            Vertex { position: [ 1.0, -1.0, 0.0], normal: [0.0, 0.0, -1.0], tex_coords: [1.0, 0.0] },
+        ]).unwrap();
 
-		let diffuse_texture = Model::load_image(include_bytes!("../assets/tuto-14-diffuse.jpg"), image::JPEG);
-		let diffuse_texture = SrgbTexture2d::new(&display.display, diffuse_texture).unwrap();
+        let diffuse_texture = Model::load_image(include_bytes!("../assets/tuto-14-diffuse.jpg"), image::JPEG);
+        let diffuse_texture = SrgbTexture2d::new(&display.display, diffuse_texture).unwrap();
 
-		let normal_texture = Model::load_image(include_bytes!("../assets/tuto-14-normal.png"), image::PNG);
-		let normal_texture = Texture2d::new(&display.display, normal_texture).unwrap();
+        let normal_texture = Model::load_image(include_bytes!("../assets/tuto-14-normal.png"), image::PNG);
+        let normal_texture = Texture2d::new(&display.display, normal_texture).unwrap();
 
-		let matrix = [
-			[1.0, 0.0, 0.0, 0.0],
-			[0.0, 1.0, 0.0, 0.0],
-			[0.0, 0.0, 1.0, 0.0],
-			[0.0, 0.0, 0.0, 1.0f32]
-		];
+        let matrix = [
+            [1.0, 0.0, 0.0, 0.0],
+            [0.0, 1.0, 0.0, 0.0],
+            [0.0, 0.0, 1.0, 0.0],
+            [0.0, 0.0, 0.0, 1.0f32]
+        ];
 
-		Model {
-			shape: shape,
+        Model {
+            shape: shape,
 			matrix: matrix,
 			diffuse_texture: diffuse_texture,
 			normal_texture: normal_texture,
@@ -50,10 +50,10 @@ impl Model {
 			position: [0.0, 0.0, 0.0],
 			rotation: [0.0, 0.0, 0.0],
 			scale: [1.0, 1.0, 1.0],
-		}
-	}
+        }
+    }*/
 
-	pub fn new_cube(display: &DisplayData) -> Model {
+    pub fn new_cube(display: &DisplayData) -> Model {
 		let shape = VertexBuffer::new(&display.display, &[
 			Vertex { position: [-1.0, 1.0, 0.0], normal: [0.0, 0.0, -1.0], tex_coords: [0.0, 1.0] },
 			Vertex { position: [1.0, 1.0, 0.0], normal: [0.0, 0.0, -1.0], tex_coords: [1.0, 1.0] },
@@ -77,16 +77,16 @@ impl Model {
 		let normal_texture = Model::load_image(include_bytes!("../assets/tuto-14-normal.png"), image::PNG);
 		let normal_texture = Texture2d::new(&display.display, normal_texture).unwrap();
 
-		let matrix = [
-			[1.0, 0.0, 0.0, 0.0],
-			[0.0, 1.0, 0.0, 0.0],
-			[0.0, 0.0, 1.0, 0.0],
-			[0.0, 0.0, 0.0, 1.0f32]
-		];
+		//let matrix = [
+		//	[1.0, 0.0, 0.0, 0.0],
+		//	[0.0, 1.0, 0.0, 0.0],
+		//	[0.0, 0.0, 1.0, 0.0],
+		//	[0.0, 0.0, 0.0, 1.0f32]
+		//];
 
 		Model {
 			shape: shape,
-			matrix: matrix,
+			//matrix: matrix,
 			diffuse_texture: diffuse_texture,
 			normal_texture: normal_texture,
 			id: 0,
