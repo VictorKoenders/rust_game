@@ -1,13 +1,7 @@
-.idea
-
-client/target/
-client/Cargo.lock
-
-server/target/
-server/Cargo.lock
-
-shared/target/
-shared/Cargo.lock
-
-Cargo.lock
+# Rust
 target/
+*.lock
+
+# IntelliJ
+.idea/
+*.iml

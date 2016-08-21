@@ -17,7 +17,7 @@ use shared::*;
 use model::Model;
 
 fn main() {
-    let mut display_data = DisplayData::new();
+	let mut display_data = DisplayData::new();
 	let mut game_state = GameState::new();
     let model = Model::new_cube(&display_data);
 	let mut network = network::Network::new();
@@ -25,9 +25,9 @@ fn main() {
 	let mut last_time = time::precise_time_ns();
     loop {
 
-        let time_now = time::precise_time_ns();
-	    let diff: f32 = ((time_now - last_time) / 1000) as f32;
-	    last_time = time_now;
+		let time_now = time::precise_time_ns();
+		let diff: f32 = ((time_now - last_time) / 1000) as f32;
+		last_time = time_now;
 
 		game_state.update(diff);
 	    display_data.update(&mut game_state);
@@ -49,7 +49,7 @@ fn main() {
 
         target.finish().unwrap();
 
-	    game_state.mouse.reset();
+		game_state.mouse.reset();
 
 		if let Some(ref player) = game_state.player {
 			network.send_throttled(NetworkMessage::SetPosition {
@@ -59,20 +59,20 @@ fn main() {
 			}, 200);
 		}
 
-        for ev in display_data.display.poll_events() {
-            match ev {
-                glium::glutin::Event::Closed => return,
-                glium::glutin::Event::KeyboardInput(state, _, Some(key)) => {
-	                game_state.keyboard.update(key, state);
+		for ev in display_data.display.poll_events() {
+			match ev {
+				glium::glutin::Event::Closed => return,
+				glium::glutin::Event::KeyboardInput(state, _, Some(key)) => {
+					game_state.keyboard.update(key, state);
 
-	                if game_state.keyboard.is_pressed(VirtualKeyCode::Escape) {
-                        return;
-                    }
-                }
-	            glium::glutin::Event::MouseMoved(x, y) => game_state.mouse.mouse_moved(x, y),
-	            glium::glutin::Event::MouseInput(state, button) => game_state.mouse.mouse_button(button, state),
-                _ => ()
-            }
-        }
-    }
+					if game_state.keyboard.is_pressed(VirtualKeyCode::Escape) {
+						return;
+					}
+				}
+				glium::glutin::Event::MouseMoved(x, y) => game_state.mouse.mouse_moved(x, y),
+				glium::glutin::Event::MouseInput(state, button) => game_state.mouse.mouse_button(button, state),
+				_ => ()
+			}
+		}
+	}
 }

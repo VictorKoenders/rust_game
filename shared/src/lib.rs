@@ -1,16 +1,24 @@
-extern crate vecmath;
 extern crate bincode;
-extern crate rustc_serialize;
 extern crate byteorder;
+extern crate rustc_serialize;
+extern crate vecmath;
 
-use std::net::{TcpListener, TcpStream};
-use vecmath::Vector3;
 use bincode::SizeLimit;
-use bincode::rustc_serialize::{ encode, decode };
-use std::io::{ Read, Write };
+use bincode::rustc_serialize::{encode, decode};
+
 use byteorder::ByteOrder;
-use std::convert::From;
-use std::sync::mpsc::SendError;
+
+use std::string;
+use std::net::TcpStream;
+use std::io::{Read, Write};
+
+use vecmath::Vector3;
+
+#[cfg(windows)]
+pub static NO_CONTENT_CODE: i32 = 10035;
+
+#[cfg(unix)]
+pub static NO_CONTENT_CODE: i32 = 35;
 
 #[derive(RustcEncodable, RustcDecodable, PartialEq, Debug, Clone)]
 pub enum NetworkMessage {
@@ -46,12 +54,6 @@ impl NetworkMessage {
 	}
 }
 
-#[cfg(windows)]
-fn no_content_code() -> i32 { 10035 }
-
-#[cfg(unix)]
-fn no_content_code() -> i32 { 35 }
-
 #[derive(RustcEncodable, RustcDecodable, PartialEq, Debug)]
 pub struct User {
 	pub id: u32,
@@ -65,7 +67,7 @@ pub struct ClientSocket {
 	host: String,
 	port: u16,
 	buffer: Vec<u8>,
-	buff: [u8;1024],
+	buff: [u8; 1024],
 	pub id: u32,
 	pub last_ping_time: f64
 }
@@ -77,15 +79,16 @@ pub enum ClientError {
 }
 
 static mut LAST_ID: u32 = 0;
+
 impl ClientSocket {
-	pub fn create<T>(host: T, port: u16) -> ClientSocket where T : std::string::ToString{
+	pub fn create<T: string::ToString>(host: T, port: u16) -> ClientSocket {
 		unsafe { LAST_ID += 1 };
 		ClientSocket {
 			stream: None,
 			host: host.to_string(),
 			port: port,
 			buffer: Vec::new(),
-			buff: [0;1024],
+			buff: [0; 1024],
 			id: unsafe { LAST_ID },
 			last_ping_time: 0f64,
 		}
@@ -110,13 +113,16 @@ impl ClientSocket {
 			host: String::new(),
 			port: 0,
 			buffer: Vec::new(),
-			buff: [0;1024],
-			id:  unsafe { LAST_ID },
+			buff: [0; 1024],
+			id: unsafe { LAST_ID },
 			last_ping_time: 0f64,
 		}
 	}
 	pub fn is_connected(&self) -> bool {
-		match self.stream { None => false, Some(_) => true }
+		match self.stream {
+			None => false,
+			Some(_) => true
+		}
 	}
 	pub fn connect(&mut self) -> Result<(), ClientError> {
 		let stream = match TcpStream::connect(format!("{}:{}", self.host, self.port).as_str()) {
@@ -134,7 +140,7 @@ impl ClientSocket {
 		Ok(())
 	}
 
-	pub fn disconnect(&mut self){
+	pub fn disconnect(&mut self) {
 		self.stream = None;
 	}
 	pub fn get_message(&mut self) -> Result<Option<NetworkMessage>, ClientError> {
@@ -152,7 +158,7 @@ impl ClientSocket {
 			},
 			Err(e) => {
 				if let Some(os_error) = e.raw_os_error() {
-					if os_error == no_content_code() {
+					if os_error == NO_CONTENT_CODE {
 						return Ok(None);
 					}
 				}
@@ -164,20 +170,20 @@ impl ClientSocket {
 			return Ok(None);
 		}
 		let len = byteorder::BigEndian::read_u32(&self.buffer.as_slice()) as usize;
-		if len + 4 <= self.buffer.len(){
-			let message: Vec<u8> = self.buffer.drain(0..4+len).skip(4).collect();
+		if len + 4 <= self.buffer.len() {
+			let message: Vec<u8> = self.buffer.drain(0..4 + len).skip(4).collect();
 			let decoded: NetworkMessage = decode(&message).unwrap();
 			return Ok(Some(decoded));
 		}
 		Ok(None)
 	}
-	pub fn send(&mut self, message: NetworkMessage) -> Result<(), ClientError>{
+	pub fn send(&mut self, message: NetworkMessage) -> Result<(), ClientError> {
 		let mut stream = match self.stream {
 			Some(ref s) => s,
 			None => return Err(ClientError::Disconnected)
 		};
 		let bytes = encode(&message, SizeLimit::Infinite).unwrap();
-		let mut len_bytes: [u8;4] = [0;4];
+		let mut len_bytes: [u8; 4] = [0; 4];
 		byteorder::BigEndian::write_u32(&mut len_bytes, bytes.len() as u32);
 
 		if stream.write(&len_bytes).is_err() { return Err(ClientError::Disconnected); }
@@ -185,7 +191,7 @@ impl ClientSocket {
 		Ok(())
 	}
 }
-
+/*
 pub struct ServerSocket {
 	listener: TcpListener,
 	pub clients: Vec<ClientSocket>,
@@ -236,7 +242,7 @@ impl ServerSocket {
 			Err(e) => {
 				let mut no_clients_error = false;
 				if let Some(os_error) = e.raw_os_error() {
-					if os_error == no_content_code() {
+					if os_error == NO_CONTENT_CODE {
 						no_clients_error = true;
 					}
 				}
@@ -279,4 +285,4 @@ impl ServerSocket {
 		}
 		Ok(())
 	}
-}
+}*/
