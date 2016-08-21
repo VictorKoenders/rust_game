@@ -8,7 +8,9 @@ mod render;
 mod model;
 mod game_state;
 mod network;
+mod ui;
 
+use ui::UIElement;
 use game_state::GameState;
 use render::*;
 use glium::Surface;
@@ -23,6 +25,7 @@ fn main() {
 	let mut network = network::Network::new();
 
 	let mut last_time = time::precise_time_ns();
+	let panel = ui::Panel::new(&display_data);
     loop {
 
 		let time_now = time::precise_time_ns();
@@ -35,17 +38,19 @@ fn main() {
 
         let mut target = display_data.display.draw();
         target.clear_color_and_depth((0.0, 0.0, 1.0, 1.0), 1.0);
-		if let Some(ref player) = game_state.player {
-			if let Some(ref model) = player.model {
-				model.render(&display_data, &mut target);
-			}
-		}
 		for entity in &game_state.entities {
 			if let Some(ref model) = entity.model {
 				model.render(&display_data, &mut target);
 			}
 		}
 		model.render(&display_data, &mut target);
+		if let Some(ref player) = game_state.player {
+			if let Some(ref model) = player.model {
+				model.render(&display_data, &mut target);
+			}
+		}
+
+		panel.draw(&mut target);
 
         target.finish().unwrap();
 
