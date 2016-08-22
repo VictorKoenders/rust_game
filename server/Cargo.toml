@@ -8,3 +8,7 @@ shared = { path = "../shared", version = "*" }
 time = "*"
 bincode = "*"
 rustc-serialize = "*"
+clippy = {version = "*", optional = true}
+
+[features]
+default = []

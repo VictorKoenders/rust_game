@@ -82,7 +82,7 @@ impl Network {
 				game_state.entities.remove(index);
 			}
 		}
-		if let NetworkMessage::SetPosition { uid, position, rotation: _ } = message {
+		if let NetworkMessage::SetPosition { uid, position, .. } = message {
 			if let Some(ref player) = game_state.player {
 				if player.id == uid {
 					return;

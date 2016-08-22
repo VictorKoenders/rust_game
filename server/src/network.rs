@@ -42,7 +42,7 @@ impl ServerSocket {
 	}
 
 	pub fn broadcast(&mut self, message: NetworkMessage) {
-		for client in self.clients.iter_mut() {
+		for client in &mut self.clients {
 			client.send(message.clone()).unwrap();
 		}
 	}
@@ -78,7 +78,7 @@ impl ServerSocket {
 		let mut remove_indexes: Vec<usize> = Vec::new();
 
 		for i in 0..self.clients.len() {
-			let ref mut client = self.clients[i];
+			let client = &mut self.clients[i];
 			match client.get_message() {
 				Ok(Some(message)) => {
 					try!(client_message_callback(client, message));

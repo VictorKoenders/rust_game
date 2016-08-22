@@ -3,6 +3,7 @@ mod panel;
 use glium::Frame;
 use vecmath::Vector2;
 use render::DisplayData;
+use glium::vertex::VertexBuffer;
 
 // TODO: implement the following types:
 pub use ui::panel::*; // panel
@@ -16,6 +17,11 @@ pub use ui::panel::*; // panel
 pub trait UIElement {
 	fn draw(&self, &mut Frame);
 	fn window_size_changed(&mut self, display: &DisplayData, width: u32, height: u32);
+}
+
+pub struct UIWrapper {
+	pub element: Box<UIElement>,
+	shape: VertexBuffer<Vertex2D>,
 }
 
 // TODO: Move this to general render data

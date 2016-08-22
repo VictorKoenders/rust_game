@@ -1,3 +1,6 @@
+#![cfg_attr(feature = "clippy", feature(plugin))]
+#![cfg_attr(feature = "clippy", plugin(clippy))]
+
 extern crate bincode;
 extern crate byteorder;
 extern crate rustc_serialize;
@@ -11,6 +14,7 @@ use byteorder::ByteOrder;
 use std::string;
 use std::net::TcpStream;
 use std::io::{Read, Write};
+use std::clone::Clone;
 
 use vecmath::Vector3;
 
@@ -50,8 +54,8 @@ impl NetworkMessage {
 			NetworkMessage::Ping,
 			NetworkMessage::PingResult(_),
 			NetworkMessage::Identify(_),
-			NetworkMessage::RemoveEntity { uid: _ },
-			NetworkMessage::SetPosition { uid: _, position: _, rotation: _ }
+			NetworkMessage::RemoveEntity { .. },
+			NetworkMessage::SetPosition { .. }
 		)
 	}
 }
@@ -82,6 +86,19 @@ pub enum ClientError {
 
 static mut LAST_ID: u32 = 0;
 
+impl Clone for ClientSocket {
+	fn clone(&self) -> ClientSocket {
+		ClientSocket {
+			stream: None,
+			host: self.host.clone(),
+			port: self.port,
+			buffer: self.buffer.clone(),
+			buff: self.buff,
+			id: self.id,
+			last_ping_time: self.last_ping_time,
+		}
+	}
+}
 impl ClientSocket {
 	pub fn create<T: string::ToString>(host: T, port: u16) -> ClientSocket {
 		unsafe { LAST_ID += 1 };
@@ -93,18 +110,6 @@ impl ClientSocket {
 			buff: [0; 1024],
 			id: unsafe { LAST_ID },
 			last_ping_time: 0f64,
-		}
-	}
-
-	pub fn clone(&self) -> ClientSocket {
-		ClientSocket {
-			stream: None,
-			host: self.host.clone(),
-			port: self.port,
-			buffer: self.buffer.clone(),
-			buff: self.buff,
-			id: self.id,
-			last_ping_time: self.last_ping_time,
 		}
 	}
 
@@ -171,7 +176,7 @@ impl ClientSocket {
 		if self.buffer.len() < 4 {
 			return Ok(None);
 		}
-		let len = byteorder::BigEndian::read_u32(&self.buffer.as_slice()) as usize;
+		let len = byteorder::BigEndian::read_u32(self.buffer.as_slice()) as usize;
 		if len + 4 <= self.buffer.len() {
 			let message: Vec<u8> = self.buffer.drain(0..4 + len).skip(4).collect();
 			let decoded: NetworkMessage = decode(&message).unwrap();

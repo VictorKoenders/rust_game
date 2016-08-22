@@ -1,5 +1,8 @@
 #![feature(drop_types_in_const)]
 
+#![cfg_attr(feature = "clippy", feature(plugin))]
+#![cfg_attr(feature = "clippy", plugin(clippy))]
+
 #[macro_use] extern crate glium;
 extern crate image;
 extern crate time;
@@ -65,7 +68,7 @@ fn main() {
 			network.send_throttled(NetworkMessage::SetPosition {
 				uid: 0,
 				position: [player.position[0], player.position[1], player.position[2]],
-				rotation: display_data.camera_rotation.clone(),
+				rotation: display_data.camera_rotation,
 			}, 200);
 		}
 

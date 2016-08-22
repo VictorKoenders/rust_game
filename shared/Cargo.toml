@@ -8,3 +8,7 @@ vecmath = "*"
 bincode = "*"
 byteorder = "*"
 rustc-serialize = "*"
+clippy = {version = "*", optional = true}
+
+[features]
+default = []

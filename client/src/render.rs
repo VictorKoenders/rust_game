@@ -150,6 +150,6 @@ pub fn fps_view_matrix(position: Vector3<f32>, rotation: Vector3<f32>) -> Matrix
 		[xaxis[0], yaxis[0], zaxis[0], 0.0],
 		[xaxis[1], yaxis[1], zaxis[1], 0.0],
 		[xaxis[2], yaxis[2], zaxis[2], 0.0],
-		[-vec3_dot(xaxis, position.clone()), -vec3_dot(yaxis, position.clone()), -vec3_dot(zaxis, position.clone()), 1.0]
+		[-vec3_dot(xaxis, position), -vec3_dot(yaxis, position), -vec3_dot(zaxis, position), 1.0]
 	]
 }

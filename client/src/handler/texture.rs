@@ -32,15 +32,15 @@ impl Texture {
 }
 
 impl TextureData {
-	pub fn get_srgb_texture2d<'a>(&'a self) -> Option<&'a SrgbTexture2d> {
-		if let &TextureData::SrgbTexture(ref data) = self {
+	pub fn get_srgb_texture2d(&self) -> Option<&SrgbTexture2d> {
+		if let TextureData::SrgbTexture(ref data) = *self {
 			Some(data)
 		} else {
 			None
 		}
 	}
-	pub fn get_texture2d<'a>(&'a self) -> Option<&'a Texture2d> {
-		if let &TextureData::Texture(ref data) = self {
+	pub fn get_texture2d(&self) -> Option<&Texture2d> {
+		if let TextureData::Texture(ref data) = *self {
 			Some(data)
 		} else {
 			None

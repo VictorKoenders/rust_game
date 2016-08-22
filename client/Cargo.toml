@@ -9,6 +9,10 @@ time = "*"
 glium = "*"
 image = "*"
 vecmath = "*"
+clippy = {version = "*", optional = true}
+
+[features]
+default = []
 
 [replace]
 "glutin:0.6.1" = { git = "https://github.com/tomaka/glutin.git" }

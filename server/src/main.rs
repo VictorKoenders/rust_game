@@ -1,3 +1,6 @@
+#![cfg_attr(feature = "clippy", feature(plugin))]
+#![cfg_attr(feature = "clippy", plugin(clippy))]
+
 extern crate shared;
 extern crate time;
 extern crate bincode;
@@ -44,7 +47,7 @@ fn main(){
 				let ping = ((time::precise_time_s() - client.last_ping_time) * 1000f64) as u32;
 				try!(client.send(NetworkMessage::PingResult(ping)));
 			}
-			if let NetworkMessage::SetPosition{ uid: _, position, rotation} = message {
+			if let NetworkMessage::SetPosition { position, rotation, .. } = message {
 				try!(s2.send(NetworkMessage::SetPosition {
 					uid: client.id,
 					position: position,
@@ -71,7 +74,7 @@ fn main(){
 		if time::precise_time_s() - last_time > 1f64 {
 			println!("Ping!");
 			last_time = time::precise_time_s();
-			for client in listener.clients.iter_mut() {
+			for client in &mut listener.clients {
 				client.last_ping_time = last_time;
 				client.send(NetworkMessage::Ping).unwrap();
 			}
@@ -82,12 +85,10 @@ fn main(){
 		let target_time = 1_000_000_000 / 50;
 		if target_time > delta_time {
 			std::thread::sleep(std::time::Duration::new(0, (target_time - delta_time) as u32));
-		} else {
+		} else if time::precise_time_s() > last_print_time + 5.0 {
 			// Server too slow, can't keep up
-			if time::precise_time_s() > last_print_time + 5.0 {
-				println!("{}: Server couldn't keep up with 50 ups", time::now().strftime("%H:%M:%S").unwrap());
-				last_print_time = time::precise_time_s();
-			}
+			println!("{}: Server couldn't keep up with 50 ups", time::now().strftime("%H:%M:%S").unwrap());
+			last_print_time = time::precise_time_s();
 		}
 	}
 }
