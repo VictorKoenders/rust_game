@@ -3,15 +3,19 @@ use glium::index::{NoIndices, PrimitiveType};
 use glium::draw_parameters::DrawParameters;
 use glium::{Surface, Frame, Program};
 use glium::vertex::VertexBuffer;
+use vecmath::{Matrix4,mat4_id};
 use render::DisplayData;
 use ui::UIElement;
 use ui::Vertex2D;
 use std::rc::Rc;
+use glium_text::{self,TextDisplay,FontTexture};
 
 pub struct Panel {
 	shape: VertexBuffer<Vertex2D>,
 	texture: Rc<TextureData>,
 	program: Program,
+	text_position: Matrix4<f32>,
+	text: Option<TextDisplay<Rc<FontTexture>>>,
 }
 
 #[inline]
@@ -30,6 +34,8 @@ impl Panel {
 		let mut result = Panel {
 			shape: VertexBuffer::new(&display.display, &[]).unwrap(),
 			texture: Texture::get(Texture::WallTexture),
+			text_position: mat4_id(),
+			text: None,
 			program: program,
 		};
 		let dimensions = display.display.get_window().unwrap().get_inner_size_pixels().unwrap();
@@ -39,7 +45,8 @@ impl Panel {
 }
 
 impl UIElement for Panel {
-	fn draw(&self, target: &mut Frame) {
+	fn draw(&self, target: &mut Frame, display: &DisplayData) {
+
 		// TODO: Draw a nice border around the panel
 		// TODO: Draw a nice background
 		// see: http://i1057.photobucket.com/albums/t398/Duvvel/senatry/67b655d5.jpg
@@ -50,6 +57,10 @@ impl UIElement for Panel {
 			&uniform! { tex: self.texture.get_srgb_texture2d().unwrap() },
 			&DrawParameters::default()
 		).unwrap();
+
+		if let Some(ref text) = self.text {
+			glium_text::draw(&text, &display.text_system, target, self.text_position, (1.0, 0.0, 0.0, 1.0));
+		}
 	}
 
 	fn window_size_changed(&mut self, display: &DisplayData, width: u32, height: u32) {
@@ -74,5 +85,15 @@ impl UIElement for Panel {
 			Vertex2D { position: [left, bottom], tex_coords: [0.0, 1.0] },
 			Vertex2D { position: [right, bottom], tex_coords: [1.0, 1.0] },
 		]).unwrap();
+
+		self.text = Some(glium_text::TextDisplay::new(&display.text_system, display.font_texture.clone(), "Hello world!"));
+		let left = get_dimension(60, width);
+		let top = get_dimension(135, height);
+		self.text_position = [
+			[0.05, 0.00, 0.00, 0.00],
+			[0.00, 0.05, 0.00, 0.00],
+			[0.00, 0.00, 0.05, 0.00],
+			[left, top, 0.00, 1.00]
+		];
 	}
 }

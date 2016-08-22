@@ -4,6 +4,7 @@
 #![cfg_attr(feature = "clippy", plugin(clippy))]
 
 #[macro_use] extern crate glium;
+extern crate glium_text;
 extern crate image;
 extern crate time;
 extern crate vecmath;
@@ -58,7 +59,7 @@ fn main() {
 			}
 		}
 
-	    ui.render(&mut target);
+	    ui.render(&mut target, &display_data);
 
         target.finish().unwrap();
 

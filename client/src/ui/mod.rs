@@ -15,7 +15,7 @@ pub use ui::panel::*; // panel
 // TODO: click/hover events
 // TODO: Nested elements
 pub trait UIElement {
-	fn draw(&self, &mut Frame);
+	fn draw(&self, &mut Frame, display: &DisplayData);
 	fn window_size_changed(&mut self, display: &DisplayData, width: u32, height: u32);
 }
 
@@ -55,9 +55,9 @@ impl UI {
 		}
 	}
 
-	pub fn render(&self, target: &mut Frame) {
+	pub fn render(&self, target: &mut Frame, display: &DisplayData) {
 		for element in &self.elements {
-			element.draw(target);
+			element.draw(target, display);
 		}
 	}
 }

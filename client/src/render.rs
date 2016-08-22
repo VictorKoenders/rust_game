@@ -6,6 +6,9 @@ use std::f32::consts;
 use game_state::GameState;
 use vecmath::{ Vector3, Matrix4, vec3_dot, mat4_id };
 use model::Model;
+use std::io::Cursor;
+use std::rc::Rc;
+use glium_text::{TextSystem,FontTexture};
 
 pub struct DisplayData<'a> {
 	pub display: GlutinFacade,
@@ -22,9 +25,14 @@ pub struct DisplayData<'a> {
 	// TODO: These draw parameters are only used in a 3D context
 	// so; make that 3D context
 	pub draw_parameters: DrawParameters<'a>,
+	pub text_system: TextSystem,
+	pub font_texture: Rc<FontTexture>,
 
 	current_cursor_state: Option<CursorState>,
 }
+
+#[cfg(windows)]
+const ARIAL_FONT: &'static [u8] = include_bytes!("C:/Windows/Fonts/ARIAL.TTF");
 
 impl<'a> DisplayData<'a> {
 	pub fn new() -> DisplayData<'a> {
@@ -56,6 +64,9 @@ impl<'a> DisplayData<'a> {
 			..Default::default()
 		};
 
+		let text_system = TextSystem::new(&display);
+		let font = FontTexture::new(&display, Cursor::new(ARIAL_FONT), 32).unwrap();
+
 		DisplayData {
 			display: display,
 			program: program,
@@ -65,6 +76,9 @@ impl<'a> DisplayData<'a> {
 			camera_position: [0.0, 0.0, -10.0],
 			camera_rotation: [0.0, 0.0, 0.0],
 			view: mat4_id(),
+
+			text_system: text_system,
+			font_texture: Rc::new(font),
 			current_cursor_state: None,
 		}
 	}
@@ -115,12 +129,13 @@ impl<'a> DisplayData<'a> {
 
 		if let Some(ref mut player) = game_state.player {
 			if let None = player.model {
-				// TODO: I don't think this ever gets reached
+				// TODO: We should load the model when the player logs in
 				player.model = Some(Model::new_cube(self));
 			}
 		}
 		for mut entity in game_state.entities.iter_mut().filter(|e| e.model.is_none()){
 			// TODO: We should load the model when the entity gets created
+			println!("Creating entity model");
 			entity.model = Some(Model::new_cube(self));
 		}
 
