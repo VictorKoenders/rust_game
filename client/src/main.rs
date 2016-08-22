@@ -9,6 +9,8 @@ mod model;
 mod game_state;
 mod network;
 mod ui;
+#[cfg(test)]
+mod test;
 
 use game_state::GameState;
 use render::*;
