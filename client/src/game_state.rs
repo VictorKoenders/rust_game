@@ -140,7 +140,7 @@ impl MouseState {
 		self.desired_cursor_position = None;
 	}
 
-	pub fn mouse_moved(&mut self, x: i32, y: i32, screen_size: (u32, u32)) {
+	pub fn mouse_moved(&mut self, x: i32, y: i32, _ /* screen_size */: (u32, u32)) {
 		// TODO: The mouse doesn't show a resize cursor when it's next to the border of the window
 		// Maybe this is a setting somewhere?
 		// Otherwise we have to manually set the cursor: http://tomaka.github.io/glium/glium/glutin/enum.MouseCursor.html

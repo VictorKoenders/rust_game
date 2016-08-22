@@ -1,17 +1,16 @@
-use glium::texture::{SrgbTexture2d, RawImage2d};
-use glium::draw_parameters::DrawParameters;
+use handler::texture::{Texture, TextureData};
 use glium::index::{NoIndices, PrimitiveType};
+use glium::draw_parameters::DrawParameters;
+use glium::{Surface, Frame, Program};
 use glium::vertex::VertexBuffer;
-use glium::{Surface,Frame,Program};
 use render::DisplayData;
-use std::io::Cursor;
 use ui::UIElement;
 use ui::Vertex2D;
-use image;
+use std::rc::Rc;
 
 pub struct Panel {
 	shape: VertexBuffer<Vertex2D>,
-	texture: SrgbTexture2d,
+	texture: Rc<TextureData>,
 	program: Program,
 }
 
@@ -21,16 +20,7 @@ fn get_dimension(val: u32, total: u32) -> f32 {
 }
 
 impl Panel {
-	fn load_image<'a>(bytes: &[u8], encoding: image::ImageFormat) -> RawImage2d<'a, u8> {
-		let image = image::load(Cursor::new(bytes), encoding).unwrap().to_rgba();
-		let image_dimensions = image.dimensions();
-		RawImage2d::from_raw_rgba_reversed(image.into_raw(), image_dimensions)
-	}
-
 	pub fn new(display: &DisplayData) -> Panel {
-		// TODO: Load the textures from a TextureManager
-		let texture = Panel::load_image(include_bytes!("../../assets/tuto-14-diffuse.jpg"), image::JPEG);
-		let texture = SrgbTexture2d::new(&display.display, texture).unwrap();
 
 		// TODO: Store this in a 2D drawing state
 		let vertex_shader_src = include_str!("../../assets/ui.vert");
@@ -39,7 +29,7 @@ impl Panel {
 
 		let mut result = Panel {
 			shape: VertexBuffer::new(&display.display, &[]).unwrap(),
-			texture: texture,
+			texture: Texture::get(Texture::WallTexture),
 			program: program,
 		};
 		let dimensions = display.display.get_window().unwrap().get_inner_size_pixels().unwrap();
@@ -57,7 +47,7 @@ impl UIElement for Panel {
 			&self.shape,
 			NoIndices(PrimitiveType::TriangleStrip),
 			&self.program,
-			&uniform! { tex: &self.texture },
+			&uniform! { tex: self.texture.get_srgb_texture2d().unwrap() },
 			&DrawParameters::default()
 		).unwrap();
 	}

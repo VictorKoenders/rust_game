@@ -1,3 +1,5 @@
+#![feature(drop_types_in_const)]
+
 #[macro_use] extern crate glium;
 extern crate image;
 extern crate time;
@@ -9,6 +11,7 @@ mod model;
 mod game_state;
 mod network;
 mod ui;
+mod handler;
 #[cfg(test)]
 mod test;
 
@@ -21,6 +24,7 @@ use model::Model;
 
 fn main() {
 	let mut display_data = DisplayData::new();
+	handler::texture::init(&display_data);
 	let mut game_state = GameState::new();
     let model = Model::new_cube(&display_data);
 	let mut network = network::Network::new();
