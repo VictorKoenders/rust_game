@@ -38,12 +38,12 @@ pub enum NetworkMessage {
 
 macro_rules! compare_branches {
 	( $first:ident, $second:ident, $( $x:pat ), * ) => {
-	    match ($first, $second) {
-	        $(
-	            (&$x, &$x) => true,
-	        )*
-	        _ => false
-	    }
+		match ($first, $second) {
+			$(
+				(&$x, &$x) => true,
+			)*
+			_ => false
+		}
 	}
 }
 

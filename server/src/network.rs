@@ -33,7 +33,7 @@ impl ServerSocket {
 		let address = format!("{}:{}", host.to_string(), port);
 		println!("Setting up socket on: {}", &address);
 		let listener = TcpListener::bind(address.as_str()).unwrap();
-		//        let listener = TcpListener::bind(format!("{}:{}", host.to_string(), port).as_str()).unwrap();
+		//		let listener = TcpListener::bind(format!("{}:{}", host.to_string(), port).as_str()).unwrap();
 		listener.set_nonblocking(true).unwrap();
 		ServerSocket {
 			listener: listener,
@@ -48,12 +48,12 @@ impl ServerSocket {
 	}
 
 	pub fn listen<F1, F2, F3>(&mut self,
-	                          client_created_callback: F1,
-	                          client_message_callback: F2,
-	                          client_removed_callback: F3) -> Result<(), ServerError>
-	                          where F1 : Fn(&mut ClientSocket) -> Result<(), ServerError>,
-	                                F2 : Fn(&mut ClientSocket, NetworkMessage) -> Result<(), ServerError>,
-	                                F3 : Fn(&mut ClientSocket) -> Result<(), ServerError> {
+							  client_created_callback: F1,
+							  client_message_callback: F2,
+							  client_removed_callback: F3) -> Result<(), ServerError>
+							  where F1: Fn(&mut ClientSocket) -> Result<(), ServerError>,
+									F2: Fn(&mut ClientSocket, NetworkMessage) -> Result<(), ServerError>,
+									F3: Fn(&mut ClientSocket) -> Result<(), ServerError> {
 		match self.listener.accept() {
 			Err(e) => {
 				let mut no_clients_error = false;

@@ -30,38 +30,38 @@ fn main() {
 	let mut display_data = DisplayData::new();
 	handler::texture::init(&display_data);
 	let mut game_state = GameState::new();
-    let model = Model::new_cube(&display_data);
+	let model = Model::new_cube(&display_data);
 	let mut network = network::Network::new();
 
 	let mut last_time = time::precise_time_ns();
 	let mut ui = ui::UI::new(&display_data);
-    loop {
+	loop {
 
 		let time_now = time::precise_time_ns();
 		let diff: f32 = ((time_now - last_time) / 1000) as f32;
 		last_time = time_now;
 
 		game_state.update(diff);
-	    display_data.update(&mut game_state);
+		display_data.update(&mut game_state);
 		network.update(&mut game_state);
 
-        let mut target = display_data.display.draw();
-        target.clear_color_and_depth((0.0, 0.0, 1.0, 1.0), 1.0);
+		let mut target = display_data.display.draw();
+		target.clear_color_and_depth((0.0, 0.0, 1.0, 1.0), 1.0);
 		for entity in &game_state.entities {
 			if let Some(ref model) = entity.model {
 				model.render(&display_data, &mut target, &entity);
 			}
 		}
-	    model.render(&display_data, &mut target, &Entity::empty());
+		model.render(&display_data, &mut target, &Entity::empty());
 		if let Some(ref player) = game_state.player {
 			if let Some(ref model) = player.model {
 				//model.render(&display_data, &mut target, &player);
 			}
 		}
 
-	    ui.render(&mut target, &display_data);
+		ui.render(&mut target, &display_data);
 
-        target.finish().unwrap();
+		target.finish().unwrap();
 
 		game_state.mouse.reset();
 
@@ -73,7 +73,7 @@ fn main() {
 			}, 100);
 		}
 
-	    let mut new_size = None;
+		let mut new_size = None;
 		for ev in display_data.display.poll_events() {
 			// TODO: Move all the logic to the elements that decide on it
 			// And allow certain elements to override each other
@@ -94,9 +94,9 @@ fn main() {
 			}
 		}
 
-	    if let Some(size) = new_size {
-		    display_data.resize(size.0, size.1);
-		    ui.resize(&display_data, size.0, size.1);
+		if let Some(size) = new_size {
+			display_data.resize(size.0, size.1);
+			ui.resize(&display_data, size.0, size.1);
 		}
 	}
 }

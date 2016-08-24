@@ -8,14 +8,14 @@ use std::rc::Rc;
 use game_state::Entity;
 
 pub struct Model {
-    shape: VertexBuffer<Vertex3D>,
+	shape: VertexBuffer<Vertex3D>,
 	diffuse_texture: Rc<TextureData>,
 	normal_texture: Rc<TextureData>,
 }
 
 impl Model {
-    pub fn new_cube(display: &DisplayData) -> Model {
-	    // TODO: Make this indexed, see target.draw in render<F>
+	pub fn new_cube(display: &DisplayData) -> Model {
+		// TODO: Make this indexed, see target.draw in render<F>
 		let shape = VertexBuffer::new(&display.display, &[
 			Vertex3D { position: [-1.0, 1.0, 0.0], normal: [0.0, 0.0, -1.0], tex_coords: [0.0, 1.0] },
 			Vertex3D { position: [1.0, 1.0, 0.0], normal: [0.0, 0.0, -1.0], tex_coords: [1.0, 1.0] },
@@ -115,13 +115,13 @@ impl Model {
 			indices,
 			&display_data.program,
 			&uniform! {
-                model: matrix,
-                view: display_data.view,
-                perspective: display_data.perspective,
-                u_light: display_data.light,
-                diffuse_tex: self.diffuse_texture.get_srgb_texture2d().unwrap(),
-                normal_tex: self.normal_texture.get_texture2d().unwrap(),
-            },
+				model: matrix,
+				view: display_data.view,
+				perspective: display_data.perspective,
+				u_light: display_data.light,
+				diffuse_tex: self.diffuse_texture.get_srgb_texture2d().unwrap(),
+				normal_tex: self.normal_texture.get_texture2d().unwrap(),
+			},
 			&display_data.draw_parameters
 		).unwrap();
 	}

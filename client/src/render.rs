@@ -109,8 +109,8 @@ impl<'a> DisplayData<'a> {
 		]
 	}
 
-    pub fn update(&mut self, game_state: &mut GameState){
-	    if let Some(position) = game_state.mouse.desired_cursor_position {
+	pub fn update(&mut self, game_state: &mut GameState) {
+		if let Some(position) = game_state.mouse.desired_cursor_position {
 			self.display.get_window().unwrap().set_cursor_position(position[0] as i32, position[1] as i32).unwrap();
 		}
 
@@ -134,7 +134,7 @@ impl<'a> DisplayData<'a> {
 			}
 		}
 
-	    for mut entity in game_state.entities.iter_mut().filter(|e| e.model.is_none()){
+		for mut entity in game_state.entities.iter_mut().filter(|e| e.model.is_none()) {
 			// TODO: We should load the model when the entity gets created
 			println!("Creating entity model");
 			entity.model = Some(Model::new_cube(self));
@@ -147,8 +147,8 @@ impl<'a> DisplayData<'a> {
 			self.camera_position[2] -= 1f32;
 			self.camera_rotation = player.rotation;
 		}
-	    self.view = fps_view_matrix(self.camera_position, self.camera_rotation);
-    }
+		self.view = fps_view_matrix(self.camera_position, self.camera_rotation);
+	}
 }
 
 pub fn fps_view_matrix(position: Vector3<f32>, rotation: Vector3<f32>) -> Matrix4<f32> {
