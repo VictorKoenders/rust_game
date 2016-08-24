@@ -138,13 +138,17 @@ impl Network {
 			self.attempt_connect();
 			return;
 		}
-		match self.socket.get_message() {
-			Ok(Some(message)) => self.handle_message(message, game_state),
-			Ok(None) => {},
+		while match self.socket.get_message() {
+			Ok(Some(message)) => {
+				self.handle_message(message, game_state);
+				true
+			},
+			Ok(None) => false,
 			Err(e) => {
 				println!("Socket error: {:?}", e);
 				self.disconnect();
+				false
 			}
-		}
+		} {}
 	}
 }

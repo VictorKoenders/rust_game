@@ -62,10 +62,10 @@ impl Model {
 
 
 		let position_matrix = [
-			[1.0, 0.0, 0.0, entity.position[0]],
-			[0.0, 1.0, 0.0, entity.position[1]],
-			[0.0, 0.0, 1.0, entity.position[2]],
-			[0.0, 0.0, 0.0, 1.0]
+			[1.0, 0.0, 0.0, 0.0],
+			[0.0, 1.0, 0.0, 0.0],
+			[0.0, 0.0, 1.0, 0.0],
+			[entity.position[0], entity.position[1], entity.position[2], 1.0]
 		];
 		// For more info, see https://en.wikipedia.org/wiki/Rotation_matrix#Basic_rotations
 		let rotation_matrix = [
