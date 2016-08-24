@@ -1,6 +1,7 @@
 use glium::glutin::{VirtualKeyCode, ElementState, MouseButton, CursorState};
-use vecmath::{ Vector2, Vector3, vec3_normalized, vec3_square_len };
+use vecmath::{Vector2, Vector3, vec3_normalized, vec3_square_len};
 use model::Model;
+use std::fmt::{Debug, Formatter, Error as DebugError};
 
 // TODO: attach a move speed to an entity
 const MOVE_SPEED: f32 = 5f32;
@@ -78,6 +79,23 @@ pub struct Entity {
 	pub position: Vector3<f32>,
 	pub rotation: Vector3<f32>,
 	pub model: Option<Model>,
+}
+
+impl Entity {
+	pub fn empty() -> Entity {
+		Entity {
+			id: 0,
+			position: [0.0, 0.0, 0.0],
+			rotation: [0.0, 0.0, 0.0],
+			model: None
+		}
+	}
+}
+
+impl Debug for Entity {
+	fn fmt(&self, f: &mut Formatter) -> Result<(), DebugError> {
+		write!(f, "[id: {:?}, position: {:?}, rotation: {:?}]", self.id, self.position, self.rotation)
+	}
 }
 
 // TODO: Move this to it's own file

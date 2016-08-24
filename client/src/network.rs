@@ -69,12 +69,16 @@ impl Network {
 			}
 		}
 		if let NetworkMessage::Identify(uid) = message {
-			game_state.player = Some(Entity {
-				position: [0.0, 0.0, 0.0],
-				rotation: [0.0, 0.0, 0.0],
-				id: uid,
-				model: None,
-			});
+			if let Some(ref mut player) = game_state.player {
+				player.id = uid;
+			} else {
+				game_state.player = Some(Entity {
+					position: [0.0, 0.0, 0.0],
+					rotation: [0.0, 0.0, 0.0],
+					id: uid,
+					model: None,
+				});
+			}
 			return;
 		}
 		if let NetworkMessage::RemoveEntity { uid } = message{

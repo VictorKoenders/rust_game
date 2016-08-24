@@ -40,8 +40,8 @@ impl<'a> DisplayData<'a> {
 			.with_depth_buffer(24)
 			.build_glium().unwrap();
 
-		let vertex_shader_src = include_str!("../assets/default.vert");
-		let fragment_shader_src = include_str!("../assets/default.frag");
+		let vertex_shader_src = include_str!("../assets/shaders/default.vert");
+		let fragment_shader_src = include_str!("../assets/shaders/default.frag");
 
 		let program = Program::from_source(&display, vertex_shader_src, fragment_shader_src, None).unwrap();
 
@@ -133,7 +133,8 @@ impl<'a> DisplayData<'a> {
 				player.model = Some(Model::new_cube(self));
 			}
 		}
-		for mut entity in game_state.entities.iter_mut().filter(|e| e.model.is_none()){
+
+	    for mut entity in game_state.entities.iter_mut().filter(|e| e.model.is_none()){
 			// TODO: We should load the model when the entity gets created
 			println!("Creating entity model");
 			entity.model = Some(Model::new_cube(self));

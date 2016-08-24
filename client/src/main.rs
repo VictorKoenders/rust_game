@@ -19,7 +19,7 @@ mod handler;
 #[cfg(test)]
 mod test;
 
-use game_state::GameState;
+use game_state::{Entity, GameState};
 use render::*;
 use glium::Surface;
 use glium::glutin::{VirtualKeyCode, Event};
@@ -49,13 +49,13 @@ fn main() {
         target.clear_color_and_depth((0.0, 0.0, 1.0, 1.0), 1.0);
 		for entity in &game_state.entities {
 			if let Some(ref model) = entity.model {
-				model.render(&display_data, &mut target);
+				model.render(&display_data, &mut target, &entity);
 			}
 		}
-		model.render(&display_data, &mut target);
+	    model.render(&display_data, &mut target, &Entity::empty());
 		if let Some(ref player) = game_state.player {
 			if let Some(ref model) = player.model {
-				model.render(&display_data, &mut target);
+				//model.render(&display_data, &mut target, &player);
 			}
 		}
 
@@ -68,9 +68,9 @@ fn main() {
 		if let Some(ref player) = game_state.player {
 			network.send_throttled(NetworkMessage::SetPosition {
 				uid: 0,
-				position: [player.position[0], player.position[1], player.position[2]],
-				rotation: display_data.camera_rotation,
-			}, 200);
+				position: player.position,
+				rotation: player.rotation,
+			}, 100);
 		}
 
 	    let mut new_size = None;

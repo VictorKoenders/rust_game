@@ -5,20 +5,12 @@ use glium::Surface;
 use vecmath::{ Vector2, Vector3, col_mat4_mul };
 use handler::texture::{Texture, TextureData};
 use std::rc::Rc;
+use game_state::Entity;
 
 pub struct Model {
     shape: VertexBuffer<Vertex3D>,
 	diffuse_texture: Rc<TextureData>,
 	normal_texture: Rc<TextureData>,
-
-	#[deprecated(note = "Needs to come from the entity this model is attached to")]
-	pub id: u32,
-	#[deprecated(note = "Needs to come from the entity this model is attached to")]
-	pub position: Vector3<f32>,
-	#[deprecated(note = "Needs to come from the entity this model is attached to")]
-	pub rotation: Vector3<f32>,
-	#[deprecated(note = "Needs to come from the entity this model is attached to")]
-	pub scale: Vector3<f32>,
 }
 
 impl Model {
@@ -45,24 +37,75 @@ impl Model {
 			shape: shape,
 			diffuse_texture: Texture::get(Texture::WallTexture),
 			normal_texture: Texture::get(Texture::WallTextureNormal),
-			id: 0,
-			position: [0.0, 0.0, 0.0],
-			rotation: [0.0, 0.0, 0.0],
-			scale: [1.0, 1.0, 1.0],
 		}
 	}
 
-	pub fn render<F>(&self, display_data: &DisplayData, target: &mut F) where F: Surface {
-		let matrix = fps_view_matrix(self.position, self.rotation);
-
+	pub fn render<F>(&self, display_data: &DisplayData, target: &mut F, entity: &Entity) where F: Surface {
+		let matrix = fps_view_matrix(entity.position, entity.rotation);
 		let scale_matrix = [
-			[self.scale[0], 0.0, 0.0, 0.0],
-			[0.0, self.scale[1], 0.0, 0.0],
-			[0.0, 0.0, self.scale[2], 0.0],
-			[0.0, 0.0, 0.0, 1.0]
+			[1.0, 0.0, 0.0, 0.0],
+			[0.0, 1.0, 0.0, 0.0],
+			[0.0, 0.0, 1.0, 0.0],
+			[0.0, 0.0, 0.0, 1.0],
 		];
 
 		let matrix = col_mat4_mul(matrix, scale_matrix);
+		println!("position: {:?}, rotation: {:?}", entity.position, entity.rotation);
+		println!("Matrix: {:?}", matrix);
+
+		// TODO: This doesn't work, figure out why it doesn't work
+
+		// The matrix for position: [0, 0, 0], rotation: [0, 0, 0] is:
+		// [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 1]]
+		// The matrix we need to get:
+		// [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]]
+
+		/*
+		let position_matrix = [
+			[0.0, 0.0, 0.0, entity.position[0]],
+			[0.0, 0.0, 0.0, entity.position[1]],
+			[0.0, 0.0, 0.0, entity.position[2]],
+			[0.0, 0.0, 0.0, 1.0]
+		];
+		// For more info, see https://en.wikipedia.org/wiki/Rotation_matrix#Basic_rotations
+		let rotation_matrix = [
+			[
+				entity.rotation[1].cos() * entity.rotation[2].cos(),
+				-entity.rotation[2].sin(),
+				entity.rotation[1].sin(),
+				0.0,
+			],
+			[
+				entity.rotation[2].sin(),
+				entity.rotation[0].cos() * entity.rotation[2].cos(),
+				-entity.rotation[0].sin(),
+				0.0,
+			],
+			[
+				-entity.rotation[1].sin() * entity.rotation[2].sin(),
+				entity.rotation[0].sin(),
+				entity.rotation[0].cos() * entity.rotation[1].cos(),
+				0.0,
+			],
+			[
+				0.0,
+				0.0,
+				0.0,
+				1.0,
+			],
+		];
+		let scale_matrix = [
+			[1.0, 0.0, 0.0, 0.0],
+			[0.0, 1.0, 0.0, 0.0],
+			[0.0, 0.0, 1.0, 0.0],
+			[0.0, 0.0, 0.0, 1.0],
+		];
+
+		let matrix = col_mat4_mul(row_mat4_mul(position_matrix, rotation_matrix), scale_matrix);
+		println!("position: {:?}, rotation: {:?}", entity.position, entity.rotation);
+		println!("Matrix: {:?}", matrix);
+
+		*/
 
 		// TODO: make this indexed
 		// see: http://tomaka.github.io/glium/glium/index/struct.IndexBuffer.html

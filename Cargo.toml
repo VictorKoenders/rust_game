@@ -1,5 +1,0 @@
-[workspace]
-members = ["server", "client"]
-
-[replace]
-"glutin:0.6.1" = { git = "https://github.com/tomaka/glutin.git" }

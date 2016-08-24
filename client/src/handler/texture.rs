@@ -9,6 +9,7 @@ use std::rc::Rc;
 pub enum Texture {
 	WallTexture,
 	WallTextureNormal,
+	PanelBackground,
 }
 
 pub enum TextureData {
@@ -53,6 +54,7 @@ pub fn init(display: &DisplayData) {
 		let mut hashmap = HashMap::new();
 		hashmap.insert(Texture::WallTexture, Rc::new(load_srgb_texture(include_bytes!("../../assets/tuto-14-diffuse.jpg"), image::JPEG, display)));
 		hashmap.insert(Texture::WallTextureNormal, Rc::new(load_texture(include_bytes!("../../assets/tuto-14-normal.png"), image::PNG, display)));
+		hashmap.insert(Texture::PanelBackground, Rc::new(load_texture(include_bytes!("../../assets/panel_background.png"), image::PNG, display)));
 		TEXTURE_DATA = Some(hashmap);
 	}
 }
