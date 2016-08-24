@@ -53,7 +53,7 @@ impl Network {
 			let mut clone = self.socket.clone();
 			thread::spawn(move ||{
 				clone.connect().unwrap_or_else(|_|());
-				sender.send(clone).unwrap();
+				sender.send(clone).unwrap();// TODO: Deal with unwrap
 			});
 		}
 	}

@@ -179,7 +179,7 @@ impl ClientSocket {
 		let len = byteorder::BigEndian::read_u32(self.buffer.as_slice()) as usize;
 		if len + 4 <= self.buffer.len() {
 			let message: Vec<u8> = self.buffer.drain(0..4 + len).skip(4).collect();
-			let decoded: NetworkMessage = decode(&message).unwrap();
+			let decoded: NetworkMessage = decode(&message).unwrap();// TODO: Deal with unwrap
 			return Ok(Some(decoded));
 		}
 		Ok(None)
@@ -189,7 +189,7 @@ impl ClientSocket {
 			Some(ref s) => s,
 			None => return Err(ClientError::Disconnected)
 		};
-		let bytes = encode(&message, SizeLimit::Infinite).unwrap();
+		let bytes = encode(&message, SizeLimit::Infinite).unwrap();// TODO: Deal with unwrap
 		let mut len_bytes: [u8; 4] = [0; 4];
 		byteorder::BigEndian::write_u32(&mut len_bytes, bytes.len() as u32);
 

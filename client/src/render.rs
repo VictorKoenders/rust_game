@@ -38,16 +38,21 @@ impl<'a> DisplayData<'a> {
 	pub fn new() -> DisplayData<'a> {
 		let display = WindowBuilder::new()
 			.with_depth_buffer(24)
-			.build_glium().unwrap();
+			.build_glium().unwrap();// TODO: Deal with unwrap
 
 		let vertex_shader_src = include_str!("../assets/shaders/default.vert");
 		let fragment_shader_src = include_str!("../assets/shaders/default.frag");
 
-		let program = Program::from_source(&display, vertex_shader_src, fragment_shader_src, None).unwrap();
+		let program = Program::from_source(
+			&display,
+			vertex_shader_src,
+			fragment_shader_src,
+			None
+		).unwrap();// TODO: Deal with unwrap
 
 		let perspective = {
-			let window: WinRef = display.get_window().unwrap();
-			let (width, height) = window.get_inner_size_pixels().unwrap();
+			let window: WinRef = display.get_window().unwrap(); // TODO: Deal with unwrap
+			let (width, height) = window.get_inner_size_pixels().unwrap(); // TODO: Deal with unwrap
 
 			DisplayData::get_perspective(width, height)
 		};
@@ -65,7 +70,7 @@ impl<'a> DisplayData<'a> {
 		};
 
 		let text_system = TextSystem::new(&display);
-		let font = FontTexture::new(&display, Cursor::new(ARIAL_FONT), 32).unwrap();
+		let font = FontTexture::new(&display, Cursor::new(ARIAL_FONT), 32).unwrap();// TODO: Deal with unwrap
 
 		DisplayData {
 			display: display,
@@ -85,7 +90,9 @@ impl<'a> DisplayData<'a> {
 
 	pub fn get_screen_dimensions(&self) -> (u32, u32) {
 		// TODO: error checking?
-		self.display.get_window().unwrap().get_inner_size_pixels().unwrap()
+		self.display
+			.get_window().unwrap()// TODO: Deal with unwrap
+			.get_inner_size_pixels().unwrap()// TODO: Deal with unwrap
 	}
 
 	pub fn resize(&mut self, width: u32, height: u32) {
@@ -111,17 +118,23 @@ impl<'a> DisplayData<'a> {
 
 	pub fn update(&mut self, game_state: &mut GameState) {
 		if let Some(position) = game_state.mouse.desired_cursor_position {
-			self.display.get_window().unwrap().set_cursor_position(position[0] as i32, position[1] as i32).unwrap();
+			self.display
+				.get_window().unwrap()// TODO: Deal with unwrap
+				.set_cursor_position(position[0] as i32, position[1] as i32).unwrap();// TODO: Deal with unwrap
 		}
 
 		match self.current_cursor_state {
 			None => {
-				self.display.get_window().unwrap().set_cursor_state(game_state.mouse.desired_cursor_state).unwrap();
+				self.display
+					.get_window().unwrap()// TODO: Deal with unwrap
+					.set_cursor_state(game_state.mouse.desired_cursor_state).unwrap();// TODO: Deal with unwrap
 				self.current_cursor_state = Some(game_state.mouse.desired_cursor_state);
 			},
 			Some(state) => {
 				if state != game_state.mouse.desired_cursor_state {
-					self.display.get_window().unwrap().set_cursor_state(game_state.mouse.desired_cursor_state).unwrap();
+					self.display
+						.get_window().unwrap()// TODO: Deal with unwrap
+						.set_cursor_state(game_state.mouse.desired_cursor_state).unwrap();// TODO: Deal with unwrap
 					self.current_cursor_state = Some(game_state.mouse.desired_cursor_state);
 				}
 			}

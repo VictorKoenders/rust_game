@@ -32,9 +32,8 @@ impl ServerSocket {
 	pub fn create<T: string::ToString>(host: T, port: i32) -> ServerSocket {
 		let address = format!("{}:{}", host.to_string(), port);
 		println!("Setting up socket on: {}", &address);
-		let listener = TcpListener::bind(address.as_str()).unwrap();
-		//		let listener = TcpListener::bind(format!("{}:{}", host.to_string(), port).as_str()).unwrap();
-		listener.set_nonblocking(true).unwrap();
+		let listener = TcpListener::bind(address.as_str()).unwrap();// TODO: Deal with unwrap
+		listener.set_nonblocking(true).unwrap();// TODO: Deal with unwrap
 		ServerSocket {
 			listener: listener,
 			clients: Vec::new(),
@@ -43,7 +42,9 @@ impl ServerSocket {
 
 	pub fn broadcast(&mut self, message: NetworkMessage) {
 		for client in &mut self.clients {
-			client.send(message.clone()).unwrap();
+			if client.send(message.clone()).is_err() {
+				client.disconnect();
+			}
 		}
 	}
 

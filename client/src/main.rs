@@ -61,7 +61,7 @@ fn main() {
 
 		ui.render(&mut target, &display_data);
 
-		target.finish().unwrap();
+		target.finish().unwrap(); // TODO: Deal with unwrap
 
 		game_state.mouse.reset();
 

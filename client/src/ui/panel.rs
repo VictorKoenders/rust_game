@@ -31,7 +31,12 @@ impl Panel {
 		// TODO: Store this in a 2D drawing state
 		let vertex_shader_src = include_str!("../../assets/shaders/ui.vert");
 		let fragment_shader_src = include_str!("../../assets/shaders/ui.frag");
-		let program = Program::from_source(&display.display, vertex_shader_src, fragment_shader_src, None).unwrap();
+		let program = Program::from_source(
+			&display.display,
+			vertex_shader_src,
+			fragment_shader_src,
+			None
+		).unwrap();// TODO: Deal with unwrap
 
 		let indices = IndexBuffer::new(&display.display, PrimitiveType::TrianglesList, &[
 			0, 1, 4, 1, 4, 5, // top-left
@@ -45,17 +50,19 @@ impl Panel {
 			8, 9, 12, 9, 12, 13, // bottom-left
 			9, 10, 13, 10, 13, 14, // bottom
 			10, 11, 14, 11, 14, 15, // bottom-right
-		]).unwrap();
+		]).unwrap();// TODO: Deal with unwrap
 
 		let mut result = Panel {
-			shape: VertexBuffer::new(&display.display, &[]).unwrap(),
+			shape: VertexBuffer::new(&display.display, &[]).unwrap(), // TODO: Deal with unwrap
 			indices: indices,
 			texture: Texture::get(Texture::PanelBackground),
 			text_position: mat4_id(),
 			text: None,
 			program: program,
 		};
-		let dimensions = display.display.get_window().unwrap().get_inner_size_pixels().unwrap();
+		let dimensions = display.display
+			.get_window().unwrap()// TODO: Deal with unwrap
+			.get_inner_size_pixels().unwrap();// TODO: Deal with unwrap
 		result.window_size_changed(display, dimensions.0, dimensions.1);
 		result
 	}
@@ -71,9 +78,9 @@ impl UIElement for Panel {
 			&self.shape,
 			&self.indices,
 			&self.program,
-			&uniform! { tex: self.texture.get_texture2d().unwrap() },
+			&uniform! { tex: self.texture.get_texture2d().unwrap() }, // TODO: Deal with unwrap
 			&DrawParameters::default()
-		).unwrap();
+		).unwrap();// TODO: Deal with unwrap
 
 		if let Some(ref text) = self.text {
 			glium_text::draw(&text, &display.text_system, target, self.text_position, (1.0, 0.0, 0.0, 1.0));
@@ -118,7 +125,7 @@ impl UIElement for Panel {
 			Vertex2D { position: [inner_left, outer_bottom], tex_coords: [1.0, 0.1] },
 			Vertex2D { position: [inner_right, outer_bottom], tex_coords: [1.0, 0.9] },
 			Vertex2D { position: [outer_right, outer_bottom], tex_coords: [1.0, 1.0] },
-		]).unwrap();
+		]).unwrap();// TODO: Deal with unwrap
 
 		self.text = Some(glium_text::TextDisplay::new(&display.text_system, display.font_texture.clone(), "Hello world!"));
 		let left = get_dimension(60, width);

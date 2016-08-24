@@ -59,16 +59,18 @@ pub fn init(display: &DisplayData) {
 	}
 }
 
+// TODO: Merge similar code in these load functions
+// TODO: Find a way to load images with transparent backgrounds
 fn load_srgb_texture(bytes: &[u8], encoding: image::ImageFormat, display: &DisplayData) -> TextureData {
-	let image = image::load(Cursor::new(bytes), encoding).unwrap().to_rgba();
+	let image = image::load(Cursor::new(bytes), encoding).unwrap().to_rgba();// TODO: Deal with unwrap
 	let image_dimensions = image.dimensions();
 	let texture = RawImage2d::from_raw_rgba_reversed(image.into_raw(), image_dimensions);
-	TextureData::SrgbTexture(SrgbTexture2d::new(&display.display, texture).unwrap())
+	TextureData::SrgbTexture(SrgbTexture2d::new(&display.display, texture).unwrap())// TODO: Deal with unwrap
 }
 
 fn load_texture(bytes: &[u8], encoding: image::ImageFormat, display: &DisplayData) -> TextureData {
-	let image = image::load(Cursor::new(bytes), encoding).unwrap().to_rgba();
+	let image = image::load(Cursor::new(bytes), encoding).unwrap().to_rgba();// TODO: Deal with unwrap
 	let image_dimensions = image.dimensions();
 	let texture = RawImage2d::from_raw_rgba_reversed(image.into_raw(), image_dimensions);
-	TextureData::Texture(Texture2d::new(&display.display, texture).unwrap())
+	TextureData::Texture(Texture2d::new(&display.display, texture).unwrap())// TODO: Deal with unwrap
 }

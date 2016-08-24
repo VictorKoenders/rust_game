@@ -76,7 +76,7 @@ fn main(){
 			last_time = time::precise_time_s();
 			for client in &mut listener.clients {
 				client.last_ping_time = last_time;
-				client.send(NetworkMessage::Ping).unwrap();
+				client.send(NetworkMessage::Ping).unwrap();// TODO: Deal with unwrap
 			}
 		}
 
@@ -87,7 +87,7 @@ fn main(){
 			std::thread::sleep(std::time::Duration::new(0, (target_time - delta_time) as u32));
 		} else if time::precise_time_s() > last_print_time + 5.0 {
 			// Server too slow, can't keep up
-			println!("{}: Server couldn't keep up with 50 ups", time::now().strftime("%H:%M:%S").unwrap());
+			println!("{}: Server couldn't keep up with 50 ups", time::now().strftime("%H:%M:%S").unwrap());// TODO: Deal with unwrap
 			last_print_time = time::precise_time_s();
 		}
 	}

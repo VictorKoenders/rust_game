@@ -23,7 +23,7 @@ impl FileHandler {
 				Ok(s) => s,
 				Err(_) => return Vec::new()
 			};
-			let users: Vec<(User, UserPassword)> = decode(&data[0..size]).unwrap();
+			let users: Vec<(User, UserPassword)> = decode(&data[0..size]).unwrap();// TODO: Deal with unwrap
 			users
 		} else {
 			Vec::new()
@@ -32,7 +32,7 @@ impl FileHandler {
 
 	#[allow(dead_code)] // TODO: Implement
 	pub fn save_users(users: &Vec<(User, UserPassword)>) {
-		let data: Vec<u8> = encode(users, SizeLimit::Infinite).unwrap();
+		let data: Vec<u8> = encode(users, SizeLimit::Infinite).unwrap();// TODO: Deal with unwrap
 		println!("Data: {:?}", data);
 	}
 }
