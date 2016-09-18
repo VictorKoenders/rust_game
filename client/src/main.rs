@@ -34,7 +34,9 @@ fn main() {
 	let mut network = network::Network::new();
 
 	let mut last_time = time::precise_time_ns();
-	let mut ui = ui::UI::new(&display_data);
+	let mut ui = ui::UI::new();
+
+	ui.load(&display_data, ui::UIView::Login);
 	loop {
 
 		let time_now = time::precise_time_ns();
@@ -46,18 +48,20 @@ fn main() {
 		network.update(&mut game_state);
 
 		let mut target = display_data.display.draw();
-		target.clear_color_and_depth((0.0, 0.0, 1.0, 1.0), 1.0);
-		for entity in &game_state.entities {
-			if let Some(ref model) = entity.model {
-				model.render(&display_data, &mut target, &entity);
+		if game_state.player.is_some() {
+			target.clear_color_and_depth((0.0, 0.0, 1.0, 1.0), 1.0);
+			for entity in &game_state.entities {
+				if let Some(ref model) = entity.model {
+					model.render(&display_data, &mut target, &entity);
+				}
 			}
+			model.render(&display_data, &mut target, &Entity::empty());
 		}
-		model.render(&display_data, &mut target, &Entity::empty());
-		if let Some(ref player) = game_state.player {
-			if let Some(ref model) = player.model {
-				//model.render(&display_data, &mut target, &player);
-			}
-		}
+		//if let Some(ref player) = game_state.player {
+		//	if let Some(ref model) = player.model {
+		//		model.render(&display_data, &mut target, &player);
+		//	}
+		//}
 
 		ui.render(&mut target, &display_data);
 

@@ -1,4 +1,4 @@
-use render::{DisplayData, fps_view_matrix};
+use render::DisplayData;
 use glium::vertex::VertexBuffer;
 use glium::index::{NoIndices, PrimitiveType};
 use glium::Surface;
