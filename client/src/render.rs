@@ -90,6 +90,7 @@ impl<'a> DisplayData<'a> {
 
 	pub fn get_screen_dimensions(&self) -> (u32, u32) {
 		// TODO: error checking?
+		// TODO: Caching?
 		self.display
 			.get_window().unwrap()// TODO: Deal with unwrap
 			.get_inner_size_pixels().unwrap()// TODO: Deal with unwrap

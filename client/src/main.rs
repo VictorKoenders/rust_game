@@ -36,6 +36,8 @@ fn main() {
 	let mut last_time = time::precise_time_ns();
 	let mut ui = ui::UI::new();
 
+	let size = display_data.get_screen_dimensions();
+	ui.resize(&display_data, size.0, size.1);
 	ui.load(&display_data, ui::UIView::Login);
 	loop {
 
@@ -46,6 +48,7 @@ fn main() {
 		game_state.update(diff);
 		display_data.update(&mut game_state);
 		network.update(&mut game_state);
+		ui.update(diff);
 
 		let mut target = display_data.display.draw();
 		if game_state.player.is_some() {
@@ -79,6 +82,10 @@ fn main() {
 
 		let mut new_size = None;
 		for ev in display_data.display.poll_events() {
+			if ui.handle_event(&ev) {
+				continue;
+			}
+
 			// TODO: Move all the logic to the elements that decide on it
 			// And allow certain elements to override each other
 			// For example: When typing in a textbox, you don't want to move your character or hit any other buttons

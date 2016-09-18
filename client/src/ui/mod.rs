@@ -8,14 +8,19 @@ use glium::index::PrimitiveType;
 use glium::vertex::VertexBuffer;
 use glium::index::IndexBuffer;
 use handler::texture::Texture;
+use glium::glutin::{ Event, ElementState };
 use render::DisplayData;
 use vecmath::Vector2;
 
 pub trait UIElement {
 	fn get_initial_position(&self, parent_width: u32, parent_height: u32) -> (u32, u32);
 	fn get_desired_size(&self, parent_width: u32, parent_height: u32) -> (u32, u32);
-	fn update(&mut self, delta_time: f32, children: &Vec<UIWrapper>);
 	fn draw(&self, render: &mut UIRender);
+	fn update(&mut self, delta_time: f32);
+	fn handle_event(&mut self, ev: &Event) -> EventResult;
+	fn click(&mut self) -> EventResult;
+	fn set_focus(&mut self) -> bool;
+
 }
 
 pub enum RenderCommand {
@@ -23,13 +28,23 @@ pub enum RenderCommand {
 	DrawText { text: String, x: u32, y: u32 },
 }
 
+pub enum EventResult {
+	Unhandled,
+	Handled,
+	SelectNext
+}
+
 pub struct UIRender {
+	pub height: u32,
+	pub width: u32,
 	pub commands: Vec<RenderCommand>
 }
 
 impl UIRender {
-	pub fn new() -> UIRender {
+	pub fn new(width: u32, height: u32) -> UIRender {
 		UIRender {
+			width: width,
+			height: height,
 			commands: Vec::new()
 		}
 	}
@@ -59,7 +74,7 @@ pub struct UIWrapper {
 }
 
 impl UIWrapper {
-	pub fn new<T>(display: &DisplayData, inner: T, parent_width: u32, parent_height: u32) -> UIWrapper
+	pub fn new<T>(display: &DisplayData, inner: T, parent_x: u32, parent_y: u32, parent_width: u32, parent_height: u32) -> UIWrapper
 		where T : UIElement + 'static {
 
 		let indices = IndexBuffer::new(&display.display, PrimitiveType::TrianglesList, &[
@@ -96,18 +111,18 @@ impl UIWrapper {
 			indices: indices,
 			shape: None
 		};
-		wrapper.resize(display, parent_width, parent_height);
+		wrapper.resize(display, parent_x, parent_y, parent_width, parent_height);
 		wrapper
 	}
-	pub fn resize(&mut self, display: &DisplayData, parent_width: u32, parent_height: u32) {
+	pub fn resize(&mut self, display: &DisplayData, parent_x: u32, parent_y: u32, parent_width: u32, parent_height: u32) {
 		let desired_size = self.element.get_desired_size(parent_width, parent_height);
 		self.size = desired_size;
 
 		let (width, height) = display.get_screen_dimensions();
 		let desired_width = desired_size.0;
 		let desired_height = desired_size.1;
-		let x = self.position.0;
-		let y = parent_height - self.position.1 - desired_height;
+		let x = parent_x + self.position.0;
+		let y = parent_y + self.position.1;
 
 		const SPACING: u32 = 13;
 
@@ -141,8 +156,8 @@ impl UIWrapper {
 		]).unwrap()); // TODO: Deal with unwrap
 	}
 
-	pub fn draw(&mut self, target: &mut Frame, display: &DisplayData, _ /*parent_width*/: u32, parent_height: u32){
-		let mut render = UIRender::new();
+	pub fn draw(&mut self, target: &mut Frame, display: &DisplayData, _ /*parent_width*/: u32, _ /*parent_height*/: u32){
+		let mut render = UIRender::new(self.size.0, self.size.1);
 		self.element.draw(&mut render);
 
 		for command in render.commands {
@@ -159,12 +174,12 @@ impl UIWrapper {
 					}
 				},
 				RenderCommand::DrawText { text, x, y } => {
-					// TODO: Cache text surfaces
+					// TODO: Cache this data as this wil mostly be the same between frames
 					let screen_size = display.get_screen_dimensions();
 					let text = glium_text::TextDisplay::new(&display.text_system, display.font_texture.clone(), &text);
 
 					let x = self.position.0 + x;
-					let y = parent_height - self.position.1 -  y;
+					let y = self.position.1 + y;
 
 					let left = get_dimension(x, screen_size.0);
 					let top = get_dimension(y, screen_size.1);
@@ -178,6 +193,64 @@ impl UIWrapper {
 					glium_text::draw(&text, &display.text_system, target, text_position, (1.0, 0.0, 0.0, 1.0));
 				}
 			}
+		}
+
+		for child in &mut self.children {
+			child.draw(target, display, self.size.0, self.size.1);
+		}
+	}
+
+	pub fn update(&mut self, delta_time: f32) {
+		self.element.update(delta_time);
+		for child in &mut self.children {
+			child.update(delta_time);
+		}
+	}
+
+	pub fn click(&mut self, x: u32, y: u32) -> EventResult {
+		println!("Click {}/{} is between {}/{} and {}/{}?", x, y,
+				 self.position.0, self.position.1, self.position.0 + self.size.0, self.position.1 + self.size.1);
+
+		if x < self.position.0 || x > self.position.0 + self.size.0 { return EventResult::Unhandled; }
+		if y < self.position.1 || y > self.position.1 + self.size.1 { return EventResult::Unhandled; }
+
+		println!("Click {}/{} is between {}/{} and {}/{}?", x, y,
+				 self.position.0, self.position.1, self.position.0 + self.size.0, self.position.1 + self.size.1);
+		let result = self.element.click();
+		match result {
+			EventResult::Unhandled => {},
+			x => return x
+		};
+
+		for child in self.children.iter_mut() {
+			match child.click(x - self.position.0, y - self.position.1) {
+				EventResult::Unhandled => continue,
+				x => return x
+			}
+		}
+		EventResult::Unhandled
+	}
+
+	pub fn handle_event(&mut self, event: &Event) -> EventResult {
+		let result = self.element.handle_event(event);
+
+		match result {
+			EventResult::Unhandled => {
+				for i in 0..self.children.len() {
+					match self.children[i].handle_event(event) {
+						EventResult::Unhandled => continue,
+						EventResult::Handled => return EventResult::Handled,
+						EventResult::SelectNext => {
+							if i < self.children.len() - 1 {
+								self.children[i+1].element.set_focus();
+							}
+							return EventResult::Handled;
+						}
+					}
+				}
+				EventResult::Unhandled
+			},
+			x => x
 		}
 	}
 }
@@ -196,20 +269,47 @@ pub struct Vertex2D {
 implement_vertex!(Vertex2D, position, tex_coords);
 
 pub struct UI {
-	pub elements: Vec<UIWrapper>
+	pub elements: Vec<UIWrapper>,
+
+	mouse_x: u32,
+	mouse_y: u32,
+	screen_height: u32
 }
 
 impl UI {
 	pub fn new() -> UI {
 		UI {
-			elements: Vec::new()
+			elements: Vec::new(),
+			mouse_x: 0,
+			mouse_y: 0,
+			screen_height: 0
 		}
 	}
 
 	pub fn load(&mut self, display: &DisplayData, view: UIView) {
 		if let UIView::Login = view {
 			let size = display.get_screen_dimensions();
-			self.elements.push(UIWrapper::new(display, panel::Panel::new(), size.0, size.1));
+			let mut panel = UIWrapper::new(display, panel::Panel::new(), 0, 0, size.0, size.1);
+
+			let mut username_textbox = textbox::Textbox::new();
+			let mut password_textbox = textbox::Textbox::new();
+
+			username_textbox.has_focus = true;
+			password_textbox.is_password = true;
+
+			let mut username_textbox = UIWrapper::new(display, username_textbox, panel.position.0, panel.position.1, panel.size.0, panel.size.1);
+			let mut password_textbox = UIWrapper::new(display, password_textbox, panel.position.0, panel.position.1, panel.size.0, panel.size.1);
+
+			username_textbox.position = (50, 100);
+			password_textbox.position = (50, 50);
+
+			username_textbox.resize(display, panel.position.0, panel.position.1, panel.size.0, panel.size.1);
+			password_textbox.resize(display, panel.position.0, panel.position.1, panel.size.0, panel.size.1);
+
+			panel.children.push(username_textbox);
+			panel.children.push(password_textbox);
+
+			self.elements.push(panel);
 		}
 	}
 
@@ -221,8 +321,42 @@ impl UI {
 	}
 
 	pub fn resize(&mut self, display: &DisplayData, width: u32, height: u32){
+		self.screen_height = display.get_screen_dimensions().1;
 		for element in &mut self.elements {
-			element.resize(display, width, height);
+			element.resize(display, 0, 0, width, height);
+		}
+	}
+
+	pub fn handle_event(&mut self,  event: &Event) -> bool {
+		if let Event::MouseMoved(x, y) = *event {
+			self.mouse_x = x as u32;
+			self.mouse_y = y as u32;
+		}
+
+		for element in &mut self.elements {
+			let result = element.handle_event(event);
+			if let EventResult::Unhandled = result {
+				continue;
+			}
+			return true;
+		}
+
+		if let Event::MouseInput(ElementState::Pressed, _) = *event {
+			for element in &mut self.elements {
+				println!("screen height: {}, mouse_y: {}", self.screen_height, self.mouse_y);
+				let result = element.click(self.mouse_x, self.screen_height - self.mouse_y);
+				if let EventResult::Unhandled = result {
+					continue;
+				}
+				return true;
+			}
+		}
+
+		false
+	}
+	pub fn update(&mut self, delta_time: f32) {
+		for element in &mut self.elements {
+			element.update(delta_time);
 		}
 	}
 }
