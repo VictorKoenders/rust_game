@@ -1,5 +1,8 @@
 use glium::glutin::{ ElementState, Event, VirtualKeyCode };
-use ui::{ UIElement, UIRender, EventResult };
+use ui::utils::{ Dimension, EventResult };
+use ui::render_state::UIRender;
+use handler::texture::Texture;
+use ui::traits::UIElement;
 
 const CURSOR_TOGGLE_DELAY: f32 = 300_000f32;
 
@@ -26,12 +29,13 @@ impl Textbox {
 }
 
 impl UIElement for Textbox {
-	fn get_initial_position(&self, _: u32, _: u32) -> (u32, u32) {
+	fn get_initial_position(&self, _: &Dimension) -> (u32, u32){
 		(50, 50)
 	}
-	fn get_desired_size(&self, _: u32, _: u32) -> (u32, u32) {
-		(100, 50)
+	fn get_desired_size(&self, _: &Dimension) -> (u32, u32){
+		(200, 30)
 	}
+
 	fn set_focus(&mut self) -> bool {
 		self.has_focus = true;
 		true
@@ -40,10 +44,9 @@ impl UIElement for Textbox {
 	fn draw(&self, render: &mut UIRender) {
 		let mut text_to_draw = self.text.clone();
 		if self.has_focus && self.show_cursor { text_to_draw.push('|'); }
-		let height = render.height / 2 - 20;
 
-		//render.set_background(Texture::PanelBackground);
-		render.draw_text_at(text_to_draw, 50, height);
+		render.set_background(Texture::PanelBackground);
+		render.draw_text_at(text_to_draw, 10, 0);
 	}
 
 	fn update(&mut self, delta_time: f32) {
@@ -90,6 +93,6 @@ impl UIElement for Textbox {
 			}
 		}
 
-		return EventResult::Unhandled;
+		EventResult::Unhandled
 	}
 }

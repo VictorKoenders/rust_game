@@ -55,8 +55,7 @@ fn main() {
 			target.clear_color_and_depth((0.0, 0.0, 1.0, 1.0), 1.0);
 			for entity in &game_state.entities {
 				if let Some(ref model) = entity.model {
-					model.render(&display_data, &mut target, &entity);
-				}
+					model.render(&display_data, &mut target, entity);				}
 			}
 			model.render(&display_data, &mut target, &Entity::empty());
 		}

@@ -70,7 +70,7 @@ impl<'a> DisplayData<'a> {
 		};
 
 		let text_system = TextSystem::new(&display);
-		let font = FontTexture::new(&display, Cursor::new(ARIAL_FONT), 32).unwrap();// TODO: Deal with unwrap
+		let font = FontTexture::new(&display, Cursor::new(ARIAL_FONT), 16).unwrap();// TODO: Deal with unwrap
 
 		DisplayData {
 			display: display,

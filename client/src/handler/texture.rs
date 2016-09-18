@@ -7,8 +7,8 @@ use std::rc::Rc;
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum Texture {
-	WallTexture,
-	WallTextureNormal,
+	Wall,
+	WallNormal,
 	PanelBackground,
 }
 
@@ -52,8 +52,8 @@ impl TextureData {
 pub fn init(display: &DisplayData) {
 	unsafe {
 		let mut hashmap = HashMap::new();
-		hashmap.insert(Texture::WallTexture, Rc::new(load_srgb_texture(include_bytes!("../../assets/tuto-14-diffuse.jpg"), image::JPEG, display)));
-		hashmap.insert(Texture::WallTextureNormal, Rc::new(load_texture(include_bytes!("../../assets/tuto-14-normal.png"), image::PNG, display)));
+		hashmap.insert(Texture::Wall, Rc::new(load_srgb_texture(include_bytes!("../../assets/tuto-14-diffuse.jpg"), image::JPEG, display)));
+		hashmap.insert(Texture::WallNormal, Rc::new(load_texture(include_bytes!("../../assets/tuto-14-normal.png"), image::PNG, display)));
 		hashmap.insert(Texture::PanelBackground, Rc::new(load_texture(include_bytes!("../../assets/panel_background.png"), image::PNG, display)));
 		TEXTURE_DATA = Some(hashmap);
 	}

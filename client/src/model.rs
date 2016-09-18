@@ -35,8 +35,8 @@ impl Model {
 
 		Model {
 			shape: shape,
-			diffuse_texture: Texture::get(Texture::WallTexture),
-			normal_texture: Texture::get(Texture::WallTextureNormal),
+			diffuse_texture: Texture::get(Texture::Wall),
+			normal_texture: Texture::get(Texture::WallNormal),
 		}
 	}
 
