@@ -18,6 +18,7 @@ mod ui;
 mod handler;
 #[cfg(test)]
 mod test;
+mod error;
 
 use game_state::{Entity, GameState};
 use render::*;
@@ -25,12 +26,27 @@ use glium::Surface;
 use glium::glutin::{VirtualKeyCode, Event};
 use shared::*;
 use model::Model;
+use std::io::{self, Write};
+use std::fs;
+use std::error::Error;
+
 
 fn main() {
+	if let Err(e) = run() {
+		log_error(e).expect("Error to be logged");
+	}
+}
+fn log_error(e: error::GameError) -> io::Result<()> {
+	let mut f = try!(fs::File::create("err.log"));
+	try!(write!(&mut f, "{}", e.description()));
+	Ok(())
+}
+
+fn run() -> Result<(), error::GameError> {
 	let mut display_data = DisplayData::new();
 	handler::texture::init(&display_data);
 	let mut game_state = GameState::new();
-	let model = Model::new_cube(&display_data);
+	let model = try!(Model::new_cube(&display_data));
 	let mut network = network::Network::new();
 
 	let mut last_time = time::precise_time_ns();
@@ -46,7 +62,7 @@ fn main() {
 		last_time = time_now;
 
 		game_state.update(diff);
-		display_data.update(&mut game_state);
+		try!(display_data.update(&mut game_state));
 		network.update(&mut game_state);
 		ui.update(diff);
 
@@ -55,10 +71,10 @@ fn main() {
 			target.clear_color_and_depth((0.0, 0.0, 1.0, 1.0), 1.0);
 			for entity in &game_state.entities {
 				if let Some(ref model) = entity.model {
-					model.render(&display_data, &mut target, entity);
+					try!(model.render(&display_data, &mut target, entity));
 				}
 			}
-			model.render(&display_data, &mut target, &Entity::empty());
+			try!(model.render(&display_data, &mut target, &Entity::empty()));
 		}
 		//if let Some(ref player) = game_state.player {
 		//	if let Some(ref model) = player.model {
@@ -68,7 +84,7 @@ fn main() {
 
 		ui.render(&mut target, &display_data);
 
-		target.finish().unwrap(); // TODO: Deal with unwrap
+		try!(target.finish().map_err(error::GameError::from_swap_buffers_error));
 
 		game_state.mouse.reset();
 
@@ -90,12 +106,12 @@ fn main() {
 			// And allow certain elements to override each other
 			// For example: When typing in a textbox, you don't want to move your character or hit any other buttons
 			match ev {
-				Event::Closed => return,
+				Event::Closed => return Ok(()),
 				Event::KeyboardInput(state, _, Some(key)) => {
 					game_state.keyboard.update(key, state);
 
 					if game_state.keyboard.is_pressed(VirtualKeyCode::Escape) {
-						return;
+						return Ok(());
 					}
 				}
 				Event::MouseMoved(x, y) => game_state.mouse.mouse_moved(x, y, display_data.get_screen_dimensions()),

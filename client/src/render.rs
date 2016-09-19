@@ -8,6 +8,7 @@ use vecmath::{ Vector3, Matrix4, vec3_dot, mat4_id };
 use model::Model;
 use std::io::Cursor;
 use std::rc::Rc;
+use error::GameError;
 use glium_text::{TextSystem,FontTexture};
 
 pub struct DisplayData<'a> {
@@ -117,7 +118,7 @@ impl<'a> DisplayData<'a> {
 		]
 	}
 
-	pub fn update(&mut self, game_state: &mut GameState) {
+	pub fn update(&mut self, game_state: &mut GameState) -> Result<(), GameError> {
 		if let Some(position) = game_state.mouse.desired_cursor_position {
 			self.display
 				.get_window().unwrap()// TODO: Deal with unwrap
@@ -126,16 +127,18 @@ impl<'a> DisplayData<'a> {
 
 		match self.current_cursor_state {
 			None => {
-				self.display
-					.get_window().unwrap()// TODO: Deal with unwrap
-					.set_cursor_state(game_state.mouse.desired_cursor_state).unwrap();// TODO: Deal with unwrap
+				match self.display.get_window() {
+					None => return Err(GameError::NoWindow),
+					Some(window) => try!(window.set_cursor_state(game_state.mouse.desired_cursor_state).map_err(GameError::from_string))
+				};
 				self.current_cursor_state = Some(game_state.mouse.desired_cursor_state);
 			},
 			Some(state) => {
 				if state != game_state.mouse.desired_cursor_state {
-					self.display
-						.get_window().unwrap()// TODO: Deal with unwrap
-						.set_cursor_state(game_state.mouse.desired_cursor_state).unwrap();// TODO: Deal with unwrap
+					match self.display.get_window() {
+						None => return Err(GameError::NoWindow),
+						Some(window) => try!(window.set_cursor_state(game_state.mouse.desired_cursor_state).map_err(GameError::from_string))
+					};
 					self.current_cursor_state = Some(game_state.mouse.desired_cursor_state);
 				}
 			}
@@ -144,14 +147,14 @@ impl<'a> DisplayData<'a> {
 		if let Some(ref mut player) = game_state.player {
 			if let None = player.model {
 				// TODO: We should load the model when the player logs in
-				player.model = Some(Model::new_cube(self));
+				player.model = Some(try!(Model::new_cube(self)));
 			}
 		}
 
 		for mut entity in game_state.entities.iter_mut().filter(|e| e.model.is_none()) {
 			// TODO: We should load the model when the entity gets created
 			println!("Creating entity model");
-			entity.model = Some(Model::new_cube(self));
+			entity.model = Some(try!(Model::new_cube(self)));
 		}
 
 		// TODO: Make the camera follow the player
@@ -162,6 +165,7 @@ impl<'a> DisplayData<'a> {
 			self.camera_rotation = player.rotation;
 		}
 		self.view = fps_view_matrix(self.camera_position, self.camera_rotation);
+		Ok(())
 	}
 }
 

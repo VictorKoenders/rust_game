@@ -1,11 +1,12 @@
 use render::DisplayData;
 use glium::vertex::VertexBuffer;
 use glium::index::{NoIndices, PrimitiveType};
-use glium::Surface;
 use vecmath::{Vector2, Vector3, col_mat4_mul, row_mat4_mul};
 use handler::texture::{Texture, TextureData};
-use std::rc::Rc;
 use game_state::Entity;
+use error::GameError;
+use glium::Surface;
+use std::rc::Rc;
 
 pub struct Model {
 	shape: VertexBuffer<Vertex3D>,
@@ -14,9 +15,9 @@ pub struct Model {
 }
 
 impl Model {
-	pub fn new_cube(display: &DisplayData) -> Model {
+	pub fn new_cube(display: &DisplayData) -> Result<Model, GameError> {
 		// TODO: Make this indexed, see target.draw in render<F>
-		let shape = VertexBuffer::new(&display.display, &[
+		let shape = try!(VertexBuffer::new(&display.display, &[
 			Vertex3D { position: [-1.0, 1.0, 0.0], normal: [0.0, 0.0, -1.0], tex_coords: [0.0, 1.0] },
 			Vertex3D { position: [1.0, 1.0, 0.0], normal: [0.0, 0.0, -1.0], tex_coords: [1.0, 1.0] },
 			Vertex3D { position: [-1.0, -1.0, 0.0], normal: [0.0, 0.0, -1.0], tex_coords: [0.0, 0.0] },
@@ -31,16 +32,17 @@ impl Model {
 			Vertex3D { position: [1.0, -1.0, 2.0], normal: [0.0, 0.0, -1.0], tex_coords: [1.0, 1.0] },
 			Vertex3D { position: [-1.0, 1.0, 2.0], normal: [0.0, 0.0, -1.0], tex_coords: [0.0, 0.0] },
 			Vertex3D { position: [1.0, 1.0, 2.0], normal: [0.0, 0.0, -1.0], tex_coords: [1.0, 0.0] },
-		]).unwrap(); // TODO: Deal with unwrap
+		]).map_err(GameError::from_creation_error)); // TODO: Deal with unwrap
 
-		Model {
+		Ok(Model {
 			shape: shape,
 			diffuse_texture: Texture::get(Texture::Wall),
 			normal_texture: Texture::get(Texture::WallNormal),
-		}
+		})
 	}
 
-	pub fn render<F>(&self, display_data: &DisplayData, target: &mut F, entity: &Entity) where F: Surface {
+	pub fn render<F>(&self, display_data: &DisplayData, target: &mut F, entity: &Entity) -> Result<(), GameError>
+		where F: Surface {
 		/*let matrix = fps_view_matrix(entity.position, entity.rotation);
 		let scale_matrix = [
 			[1.0, 0.0, 0.0, 0.0],
@@ -103,10 +105,18 @@ impl Model {
 
 		let matrix = col_mat4_mul(row_mat4_mul(position_matrix, rotation_matrix), scale_matrix);
 
+		let diffuse_tex = match self.diffuse_texture.get_srgb_texture2d() {
+			Some(t) => t,
+			None => return Err(GameError::CouldNotGetTexture)
+		};
+		let normal_tex = match self.normal_texture.get_texture2d() {
+			Some(t) => t,
+			None => return Err(GameError::CouldNotGetTexture)
+		};
 		// TODO: make this indexed
 		// see: http://tomaka.github.io/glium/glium/index/struct.IndexBuffer.html
 		let indices = NoIndices(PrimitiveType::TriangleStrip);
-		target.draw(
+		try!(target.draw(
 			&self.shape,
 			indices,
 			&display_data.program,
@@ -115,11 +125,12 @@ impl Model {
 				view: display_data.view,
 				perspective: display_data.perspective,
 				u_light: display_data.light,
-				diffuse_tex: self.diffuse_texture.get_srgb_texture2d().unwrap(),// TODO: Deal with unwrap
-				normal_tex: self.normal_texture.get_texture2d().unwrap(),// TODO: Deal with unwrap
+				diffuse_tex: diffuse_tex,
+				normal_tex: normal_tex,
 			},
 			&display_data.draw_parameters
-		).unwrap();// TODO: Deal with unwrap
+		).map_err(GameError::from_draw_error));
+		Ok(())
 	}
 }
 
