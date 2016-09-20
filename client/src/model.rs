@@ -32,7 +32,7 @@ impl Model {
 			Vertex3D { position: [1.0, -1.0, 2.0], normal: [0.0, 0.0, -1.0], tex_coords: [1.0, 1.0] },
 			Vertex3D { position: [-1.0, 1.0, 2.0], normal: [0.0, 0.0, -1.0], tex_coords: [0.0, 0.0] },
 			Vertex3D { position: [1.0, 1.0, 2.0], normal: [0.0, 0.0, -1.0], tex_coords: [1.0, 0.0] },
-		]).map_err(GameError::from_creation_error)); // TODO: Deal with unwrap
+		]));
 
 		Ok(Model {
 			shape: shape,
@@ -105,14 +105,8 @@ impl Model {
 
 		let matrix = col_mat4_mul(row_mat4_mul(position_matrix, rotation_matrix), scale_matrix);
 
-		let diffuse_tex = match self.diffuse_texture.get_srgb_texture2d() {
-			Some(t) => t,
-			None => return Err(GameError::CouldNotGetTexture)
-		};
-		let normal_tex = match self.normal_texture.get_texture2d() {
-			Some(t) => t,
-			None => return Err(GameError::CouldNotGetTexture)
-		};
+		let diffuse_tex = try_get!(self.diffuse_texture.get_srgb_texture2d(), "Could not get diffuse texture");
+		let normal_tex = try_get!(self.normal_texture.get_texture2d(), "Could not get normal texture");
 		// TODO: make this indexed
 		// see: http://tomaka.github.io/glium/glium/index/struct.IndexBuffer.html
 		let indices = NoIndices(PrimitiveType::TriangleStrip);
@@ -129,10 +123,11 @@ impl Model {
 				normal_tex: normal_tex,
 			},
 			&display_data.draw_parameters
-		).map_err(GameError::from_draw_error));
+		));
 		Ok(())
 	}
 }
+
 
 // TODO: Move this to general render data
 #[derive(Copy, Clone)]

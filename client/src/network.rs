@@ -1,8 +1,9 @@
-use std::sync::mpsc::{ Receiver, channel };
 use shared::{ ClientSocket, NetworkMessage };
-use time;
-use std::thread;
+use std::sync::mpsc::{ Receiver, channel };
 use game_state::{ GameState, Entity };
+use std::thread;
+use error;
+use time;
 
 pub struct Network {
 	socket: ClientSocket,
@@ -53,7 +54,7 @@ impl Network {
 			let mut clone = self.socket.clone();
 			thread::spawn(move ||{
 				clone.connect().unwrap_or_else(|_|());
-				sender.send(clone).unwrap();// TODO: Deal with unwrap
+				sender.send(clone).unwrap();
 			});
 		}
 	}
@@ -112,25 +113,26 @@ impl Network {
 		}
 	}
 
-	pub fn send_throttled(&mut self, message: NetworkMessage, delay_in_ms: u64){
+	pub fn send_throttled(&mut self, message: NetworkMessage, delay_in_ms: u64) -> Result<(), error::GameError> {
 		let position = self.last_send_messages.iter_mut().position(|x| x.0.is_same_type_as(&message)).unwrap_or_else(||self.last_send_messages.len());
 		if position != self.last_send_messages.len() {
 			let time = self.last_send_messages[position].1;
 			if time > ::time::precise_time_ns() - delay_in_ms * 1_000_000u64 {
-				return;
+				return Ok(());
 			}
 			self.last_send_messages.remove(position);
 		}
 		self.last_send_messages.push((message.clone(), time::precise_time_ns()));
-		self.send(message);
+		try!(self.send(message));
+		Ok(())
 	}
 
-	pub fn send(&mut self, message: NetworkMessage){
+	pub fn send(&mut self, message: NetworkMessage) -> Result<(), error::GameError> {
 		if self.socket.is_connected() {
-			// TODO: Handle error message?
 			// TODO: Disconnect on error?
-			self.socket.send(message).unwrap();
+			try!(self.socket.send(message));
 		}
+		Ok(())
 	}
 
 	pub fn update(&mut self, game_state: &mut GameState) {

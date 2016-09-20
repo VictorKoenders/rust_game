@@ -8,6 +8,7 @@ use ui::traits::UIElement;
 use glium::glutin::Event;
 use render::DisplayData;
 use glium_text;
+use error;
 
 pub struct UIWrapper {
 	pub element: Box<UIElement>,
@@ -21,10 +22,10 @@ pub struct UIWrapper {
 }
 
 impl UIWrapper {
-	pub fn new<T>(display: &DisplayData, inner: T, parent_dimensions: &Dimension) -> UIWrapper
+	pub fn new<T>(display: &DisplayData, inner: T, parent_dimensions: &Dimension) -> Result<UIWrapper, error::GameError>
 		where T : UIElement + 'static {
 
-		let indices = IndexBuffer::new(&display.display, PrimitiveType::TrianglesList, &[
+		let indices = try!(IndexBuffer::new(&display.display, PrimitiveType::TrianglesList, &[
 			0, 1, 4, 1, 4, 5, // top-left
 			1, 2, 5, 2, 5, 6, // top
 			2, 3, 6, 3, 6, 7, // top-right
@@ -36,16 +37,16 @@ impl UIWrapper {
 			8, 9, 12, 9, 12, 13, // bottom-left
 			9, 10, 13, 10, 13, 14, // bottom
 			10, 11, 14, 11, 14, 15, // bottom-right
-		]).unwrap(); // TODO: Deal with unwrap
+		]));
 
 		let vertex_shader_src = include_str!("../../assets/shaders/ui.vert");
 		let fragment_shader_src = include_str!("../../assets/shaders/ui.frag");
-		let program = Program::from_source(
+		let program = try!(Program::from_source(
 			&display.display,
 			vertex_shader_src,
 			fragment_shader_src,
 			None
-		).unwrap(); // TODO: Deal with unwrap
+		));
 
 		let position = inner.get_initial_position(parent_dimensions);
 
@@ -58,14 +59,14 @@ impl UIWrapper {
 			indices: indices,
 			shape: None
 		};
-		wrapper.resize(display, parent_dimensions);
-		wrapper
+		try!(wrapper.resize(display, parent_dimensions));
+		Ok(wrapper)
 	}
-	pub fn resize(&mut self, display: &DisplayData, parent_dimensions: &Dimension) {
+	pub fn resize(&mut self, display: &DisplayData, parent_dimensions: &Dimension) -> Result<(), error::GameError> {
 		let desired_size = self.element.get_desired_size(parent_dimensions);
 		self.size = desired_size;
 
-		let (width, height) = display.get_screen_dimensions();
+		let (width, height) = try!(display.get_screen_dimensions());
 		let desired_width = desired_size.0;
 		let desired_height = desired_size.1;
 		let x = parent_dimensions.x + self.position.0;
@@ -84,7 +85,7 @@ impl UIWrapper {
 		let inner_right = get_dimension(x + desired_width - SPACING, width);
 		let inner_bottom = get_dimension(y + desired_height - SPACING, height);
 
-		self.shape = Some(VertexBuffer::new(&display.display, &[
+		self.shape = Some(try!(VertexBuffer::new(&display.display, &[
 			Vertex2D { position: [outer_left, outer_top], tex_coords: [0.0, 0.0] },
 			Vertex2D { position: [inner_left, outer_top], tex_coords: [0.0, 0.1] },
 			Vertex2D { position: [inner_right, outer_top], tex_coords: [0.0, 0.9] },
@@ -101,10 +102,11 @@ impl UIWrapper {
 			Vertex2D { position: [inner_left, outer_bottom], tex_coords: [1.0, 0.1] },
 			Vertex2D { position: [inner_right, outer_bottom], tex_coords: [1.0, 0.9] },
 			Vertex2D { position: [outer_right, outer_bottom], tex_coords: [1.0, 1.0] },
-		]).unwrap()); // TODO: Deal with unwrap
+		])));
+		Ok(())
 	}
 
-	pub fn draw(&mut self, target: &mut Frame, display: &DisplayData, parent_x: u32, parent_y: u32){
+	pub fn draw(&mut self, target: &mut Frame, display: &DisplayData, parent_x: u32, parent_y: u32) -> Result<(), error::GameError> {
 		let mut render = UIRender::new(self.size.0, self.size.1);
 		self.element.draw(&mut render);
 
@@ -112,18 +114,18 @@ impl UIWrapper {
 			match command {
 				RenderCommand::DrawBackground(texture) => {
 					if let Some(ref shape) = self.shape {
-						target.draw(
+						try!(target.draw(
 							shape,
 							&self.indices,
 							&self.program,
-							&uniform! { tex: Texture::get(texture).get_texture2d().unwrap() }, // TODO: Deal with unwrap
+							&uniform! { tex: try_get!(Texture::get(texture).get_texture2d(), "Could not get background texture") },
 							&DrawParameters::default()
-						).unwrap(); // TODO: Deal with unwrap
+						), "Could not draw background texture");
 					}
 				},
 				RenderCommand::DrawText { text, x, y } => {
 					// TODO: Cache this data as this wil mostly be the same between frames
-					let screen_size = display.get_screen_dimensions();
+					let screen_size = try!(display.get_screen_dimensions());
 					let text = glium_text::TextDisplay::new(&display.text_system, display.font_texture.clone(), &text);
 
 					let x = parent_x + self.position.0 + x;
@@ -144,8 +146,9 @@ impl UIWrapper {
 		}
 
 		for child in &mut self.children {
-			child.draw(target, display, parent_x + self.position.0, parent_y + self.position.1);
+			try!(child.draw(target, display, parent_x + self.position.0, parent_y + self.position.1));
 		}
+		Ok(())
 	}
 
 	pub fn update(&mut self, delta_time: f32) {

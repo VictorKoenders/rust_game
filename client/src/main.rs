@@ -10,6 +10,8 @@ extern crate time;
 extern crate vecmath;
 extern crate shared;
 
+#[macro_use]
+mod error;
 mod render;
 mod model;
 mod game_state;
@@ -18,7 +20,6 @@ mod ui;
 mod handler;
 #[cfg(test)]
 mod test;
-mod error;
 
 use game_state::{Entity, GameState};
 use render::*;
@@ -26,7 +27,7 @@ use glium::Surface;
 use glium::glutin::{VirtualKeyCode, Event};
 use shared::*;
 use model::Model;
-use std::io::{self, Write};
+use std::io::Write;
 use std::fs;
 use std::error::Error;
 
@@ -36,15 +37,15 @@ fn main() {
 		log_error(e).expect("Error to be logged");
 	}
 }
-fn log_error(e: error::GameError) -> io::Result<()> {
+fn log_error(e: error::GameError) -> Result<(), error::GameError> {
 	let mut f = try!(fs::File::create("err.log"));
 	try!(write!(&mut f, "{}", e.description()));
 	Ok(())
 }
 
 fn run() -> Result<(), error::GameError> {
-	let mut display_data = DisplayData::new();
-	handler::texture::init(&display_data);
+	let mut display_data = try!(DisplayData::new());
+	try!(handler::texture::init(&display_data));
 	let mut game_state = GameState::new();
 	let model = try!(Model::new_cube(&display_data));
 	let mut network = network::Network::new();
@@ -52,9 +53,9 @@ fn run() -> Result<(), error::GameError> {
 	let mut last_time = time::precise_time_ns();
 	let mut ui = ui::UI::new();
 
-	let size = display_data.get_screen_dimensions();
-	ui.resize(&display_data, size.0, size.1);
-	ui.load(&display_data, ui::UIView::Login);
+	let size = try!(display_data.get_screen_dimensions());
+	try!(ui.resize(&display_data, size.0, size.1));
+	try!(ui.load(&display_data, ui::UIView::Login));
 	loop {
 
 		let time_now = time::precise_time_ns();
@@ -82,18 +83,18 @@ fn run() -> Result<(), error::GameError> {
 		//	}
 		//}
 
-		ui.render(&mut target, &display_data);
+		try!(ui.render(&mut target, &display_data));
 
-		try!(target.finish().map_err(error::GameError::from_swap_buffers_error));
+		try!(target.finish());
 
 		game_state.mouse.reset();
 
 		if let Some(ref player) = game_state.player {
-			network.send_throttled(NetworkMessage::SetPosition {
+			try!(network.send_throttled(NetworkMessage::SetPosition {
 				uid: 0,
 				position: player.position,
 				rotation: player.rotation,
-			}, 100);
+			}, 100));
 		}
 
 		let mut new_size = None;
@@ -114,7 +115,7 @@ fn run() -> Result<(), error::GameError> {
 						return Ok(());
 					}
 				}
-				Event::MouseMoved(x, y) => game_state.mouse.mouse_moved(x, y, display_data.get_screen_dimensions()),
+				Event::MouseMoved(x, y) => game_state.mouse.mouse_moved(x, y, try!(display_data.get_screen_dimensions())),
 				Event::MouseInput(state, button) => game_state.mouse.mouse_button(button, state),
 				Event::Resized(width, height) => new_size = Some((width, height)),
 				_ => ()
@@ -123,7 +124,7 @@ fn run() -> Result<(), error::GameError> {
 
 		if let Some(size) = new_size {
 			display_data.resize(size.0, size.1);
-			ui.resize(&display_data, size.0, size.1);
+			try!(ui.resize(&display_data, size.0, size.1));
 		}
 	}
 }

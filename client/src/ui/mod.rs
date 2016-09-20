@@ -13,6 +13,7 @@ use glium::Frame;
 use glium::glutin::{ Event, ElementState };
 use render::DisplayData;
 use ui::elements::{ Panel, Textbox };
+use error;
 
 pub struct UI {
 	pub elements: Vec<UIWrapper>,
@@ -30,10 +31,10 @@ impl UI {
 		}
 	}
 
-	pub fn load(&mut self, display: &DisplayData, view: UIView) {
+	pub fn load(&mut self, display: &DisplayData, view: UIView) -> Result<(), error::GameError> {
 		if let UIView::Login = view {
-			let size = display.get_screen_dimensions();
-			let mut panel = UIWrapper::new(display, Panel::new(), &Dimension { x: 0, y: 0, width: size.0, height: size.1 });
+			let size = try!(display.get_screen_dimensions());
+			let mut panel = try!(UIWrapper::new(display, Panel::new(), &Dimension { x: 0, y: 0, width: size.0, height: size.1 }));
 
 			let mut username_textbox = Textbox::new();
 			let mut password_textbox = Textbox::new();
@@ -41,34 +42,37 @@ impl UI {
 			username_textbox.has_focus = true;
 			password_textbox.is_password = true;
 
-			let mut username_textbox = UIWrapper::new(display, username_textbox, &Dimension::from_uielement(&panel));
-			let mut password_textbox = UIWrapper::new(display, password_textbox, &Dimension::from_uielement(&panel));
+			let mut username_textbox = try!(UIWrapper::new(display, username_textbox, &Dimension::from_uielement(&panel)));
+			let mut password_textbox = try!(UIWrapper::new(display, password_textbox, &Dimension::from_uielement(&panel)));
 
 			username_textbox.position = (0, 0);
 			username_textbox.size = (100, 100);
 			password_textbox.position = (0, 100);
 			password_textbox.size = (100, 100);
 
-			username_textbox.resize(display, &Dimension::from_uielement(&panel));
-			password_textbox.resize(display, &Dimension::from_uielement(&panel));
+			try!(username_textbox.resize(display, &Dimension::from_uielement(&panel)));
+			try!(password_textbox.resize(display, &Dimension::from_uielement(&panel)));
 
 			panel.children.push(username_textbox);
 			panel.children.push(password_textbox);
 
 			self.elements.push(panel);
 		}
+		Ok(())
 	}
 
-	pub fn render(&mut self, target: &mut Frame, display: &DisplayData) {
+	pub fn render(&mut self, target: &mut Frame, display: &DisplayData) -> Result<(), error::GameError> {
 		for element in &mut self.elements {
-			element.draw(target, display, 0, 0);
+			try!(element.draw(target, display, 0, 0));
 		}
+		Ok(())
 	}
 
-	pub fn resize(&mut self, display: &DisplayData, width: u32, height: u32){
+	pub fn resize(&mut self, display: &DisplayData, width: u32, height: u32) -> Result<(), error::GameError>{
 		for element in &mut self.elements {
-			element.resize(display, &Dimension { x: 0, y: 0, width: width, height: height });
+			try!(element.resize(display, &Dimension { x: 0, y: 0, width: width, height: height }));
 		}
+		Ok(())
 	}
 
 	pub fn handle_event(&mut self,  event: &Event) -> bool {

@@ -84,6 +84,12 @@ pub enum ClientError {
 	Disconnected,
 }
 
+impl ClientError {
+	pub fn description(&self) -> String {
+		format!("{:?}", self)
+	}
+}
+
 static mut LAST_ID: u32 = 0;
 
 impl Clone for ClientSocket {

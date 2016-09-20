@@ -36,24 +36,24 @@ pub struct DisplayData<'a> {
 const ARIAL_FONT: &'static [u8] = include_bytes!("C:/Windows/Fonts/ARIAL.TTF");
 
 impl<'a> DisplayData<'a> {
-	pub fn new() -> DisplayData<'a> {
-		let display = WindowBuilder::new()
+	pub fn new() -> Result<DisplayData<'a>, GameError> {
+		let display = try!(WindowBuilder::new()
 			.with_depth_buffer(24)
-			.build_glium().unwrap();// TODO: Deal with unwrap
+			.build_glium());
 
 		let vertex_shader_src = include_str!("../assets/shaders/default.vert");
 		let fragment_shader_src = include_str!("../assets/shaders/default.frag");
 
-		let program = Program::from_source(
+		let program = try!(Program::from_source(
 			&display,
 			vertex_shader_src,
 			fragment_shader_src,
 			None
-		).unwrap();// TODO: Deal with unwrap
+		));
 
 		let perspective = {
-			let window: WinRef = display.get_window().unwrap(); // TODO: Deal with unwrap
-			let (width, height) = window.get_inner_size_pixels().unwrap(); // TODO: Deal with unwrap
+			let window: WinRef = try_get!(display.get_window(), "Could not get window");
+			let (width, height) = try_get!(window.get_inner_size_pixels(), "Could not get window pixel size");
 
 			DisplayData::get_perspective(width, height)
 		};
@@ -71,9 +71,9 @@ impl<'a> DisplayData<'a> {
 		};
 
 		let text_system = TextSystem::new(&display);
-		let font = FontTexture::new(&display, Cursor::new(ARIAL_FONT), 32).unwrap();// TODO: Deal with unwrap
+		let font = try!(FontTexture::new(&display, Cursor::new(ARIAL_FONT), 32), "Could not create font Arial 32pt");
 
-		DisplayData {
+		Ok(DisplayData {
 			display: display,
 			program: program,
 			perspective: perspective,
@@ -86,15 +86,14 @@ impl<'a> DisplayData<'a> {
 			text_system: text_system,
 			font_texture: Rc::new(font),
 			current_cursor_state: None,
-		}
+		})
 	}
 
-	pub fn get_screen_dimensions(&self) -> (u32, u32) {
-		// TODO: error checking?
-		// TODO: Caching?
-		self.display
-			.get_window().unwrap()// TODO: Deal with unwrap
-			.get_inner_size_pixels().unwrap()// TODO: Deal with unwrap
+	pub fn get_screen_dimensions(&self) -> Result<(u32, u32), GameError> {
+		// TODO: Cache this data and update it when we get a resize event
+		Ok(try_get!(
+			try_get!(self.display.get_window(), "Could not get window")
+			.get_inner_size_pixels(), "Could not get window pixel size"))
 	}
 
 	pub fn resize(&mut self, width: u32, height: u32) {
@@ -120,25 +119,20 @@ impl<'a> DisplayData<'a> {
 
 	pub fn update(&mut self, game_state: &mut GameState) -> Result<(), GameError> {
 		if let Some(position) = game_state.mouse.desired_cursor_position {
-			self.display
-				.get_window().unwrap()// TODO: Deal with unwrap
-				.set_cursor_position(position[0] as i32, position[1] as i32).unwrap();// TODO: Deal with unwrap
+			let window = try_get!(self.display.get_window(), "Could not get window");
+			try!(window.set_cursor_position(position[0] as i32, position[1] as i32), "Could not set cursor position");
 		}
 
 		match self.current_cursor_state {
 			None => {
-				match self.display.get_window() {
-					None => return Err(GameError::NoWindow),
-					Some(window) => try!(window.set_cursor_state(game_state.mouse.desired_cursor_state).map_err(GameError::from_string))
-				};
+				let window = try_get!(self.display.get_window(), "Could not get window handle");
+				try!(window.set_cursor_state(game_state.mouse.desired_cursor_state), "Could not set cursor state");
 				self.current_cursor_state = Some(game_state.mouse.desired_cursor_state);
 			},
 			Some(state) => {
 				if state != game_state.mouse.desired_cursor_state {
-					match self.display.get_window() {
-						None => return Err(GameError::NoWindow),
-						Some(window) => try!(window.set_cursor_state(game_state.mouse.desired_cursor_state).map_err(GameError::from_string))
-					};
+					let window = try_get!(self.display.get_window(), "Could not get window handle");
+					try!(window.set_cursor_state(game_state.mouse.desired_cursor_state), "Could not set cursor state");
 					self.current_cursor_state = Some(game_state.mouse.desired_cursor_state);
 				}
 			}
